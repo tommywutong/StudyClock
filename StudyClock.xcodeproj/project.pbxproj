@@ -1,0 +1,816 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 110;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		4C40AE893068CBAB00DE2C68 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4C40AE883068CBAB00DE2C68 /* WidgetKit.framework */; };
+		4C40AE8B3068CBAB00DE2C68 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4C40AE8A3068CBAB00DE2C68 /* SwiftUI.framework */; };
+		4C40AE963068CBAE00DE2C68 /* StudyClockWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 4C40AE863068CBAB00DE2C68 /* StudyClockWidgetExtension.appex */; platformFilters = (macos, ); settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		4C40AE683068CB7E00DE2C68 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 4C40AE523068CB7B00DE2C68 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 4C40AE593068CB7B00DE2C68;
+			remoteInfo = StudyClock;
+		};
+		4C40AE723068CB7E00DE2C68 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 4C40AE523068CB7B00DE2C68 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 4C40AE593068CB7B00DE2C68;
+			remoteInfo = StudyClock;
+		};
+		4C40AE943068CBAE00DE2C68 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 4C40AE523068CB7B00DE2C68 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 4C40AE853068CBAB00DE2C68;
+			remoteInfo = StudyClockWidgetExtension;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		4C40AE9B3068CBAE00DE2C68 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			dstPath = "";
+			dstSubfolder = PlugIns;
+			files = (
+				4C40AE963068CBAE00DE2C68 /* StudyClockWidgetExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		4C40AE5A3068CB7B00DE2C68 /* StudyClock.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = StudyClock.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		4C40AE673068CB7E00DE2C68 /* StudyClockTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = StudyClockTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		4C40AE713068CB7E00DE2C68 /* StudyClockUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = StudyClockUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		4C40AE863068CBAB00DE2C68 /* StudyClockWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = StudyClockWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		4C40AE883068CBAB00DE2C68 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = /System/Library/Frameworks/WidgetKit.framework; sourceTree = "<absolute>"; };
+		4C40AE8A3068CBAB00DE2C68 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = /System/Library/Frameworks/SwiftUI.framework; sourceTree = "<absolute>"; };
+		4CE6A368306A6BE300EDB9EB /* StudyClockWidgetExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = StudyClockWidgetExtension.entitlements; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		4C40AE973068CBAE00DE2C68 /* Exceptions for "StudyClockWidget" folder in "StudyClockWidgetExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 4C40AE853068CBAB00DE2C68 /* StudyClockWidgetExtension */;
+		};
+		4C68C6D1306A8FF10059E141 /* Exceptions for "StudyClock" folder in "StudyClockWidgetExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Domain/TaskProgress.swift,
+				Domain/TimerActionValue.swift,
+				Domain/TimerReducer.swift,
+				Domain/TimerSnapshot.swift,
+				Persistence/StudyStore.swift,
+				Persistence/StudyTaskRecord.swift,
+				Widgets/StudyTimerWidgetState.swift,
+				Widgets/ToggleStudyTimerIntent.swift,
+			);
+			target = 4C40AE853068CBAB00DE2C68 /* StudyClockWidgetExtension */;
+		};
+		4CE6A555306A960600EDB9EB /* Exceptions for "StudyClock" folder in "StudyClock" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 4C40AE593068CB7B00DE2C68 /* StudyClock */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		4C40AE5C3068CB7B00DE2C68 /* StudyClock */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				4CE6A555306A960600EDB9EB /* Exceptions for "StudyClock" folder in "StudyClock" target */,
+				4C68C6D1306A8FF10059E141 /* Exceptions for "StudyClock" folder in "StudyClockWidgetExtension" target */,
+			);
+			path = StudyClock;
+			sourceTree = "<group>";
+		};
+		4C40AE6A3068CB7E00DE2C68 /* StudyClockTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = StudyClockTests;
+			sourceTree = "<group>";
+		};
+		4C40AE743068CB7E00DE2C68 /* StudyClockUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = StudyClockUITests;
+			sourceTree = "<group>";
+		};
+		4C40AE8C3068CBAB00DE2C68 /* StudyClockWidget */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				4C40AE973068CBAE00DE2C68 /* Exceptions for "StudyClockWidget" folder in "StudyClockWidgetExtension" target */,
+			);
+			path = StudyClockWidget;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		4C40AE573068CB7B00DE2C68 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			files = (
+			);
+		};
+		4C40AE643068CB7E00DE2C68 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			files = (
+			);
+		};
+		4C40AE6E3068CB7E00DE2C68 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			files = (
+			);
+		};
+		4C40AE833068CBAB00DE2C68 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			files = (
+				4C40AE8B3068CBAB00DE2C68 /* SwiftUI.framework in Frameworks */,
+				4C40AE893068CBAB00DE2C68 /* WidgetKit.framework in Frameworks */,
+			);
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		4C40AE513068CB7B00DE2C68 = {
+			isa = PBXGroup;
+			children = (
+				4CE6A368306A6BE300EDB9EB /* StudyClockWidgetExtension.entitlements */,
+				4C40AE5C3068CB7B00DE2C68 /* StudyClock */,
+				4C40AE6A3068CB7E00DE2C68 /* StudyClockTests */,
+				4C40AE743068CB7E00DE2C68 /* StudyClockUITests */,
+				4C40AE8C3068CBAB00DE2C68 /* StudyClockWidget */,
+				4C40AE873068CBAB00DE2C68 /* Frameworks */,
+				4C40AE5B3068CB7B00DE2C68 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		4C40AE5B3068CB7B00DE2C68 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				4C40AE5A3068CB7B00DE2C68 /* StudyClock.app */,
+				4C40AE673068CB7E00DE2C68 /* StudyClockTests.xctest */,
+				4C40AE713068CB7E00DE2C68 /* StudyClockUITests.xctest */,
+				4C40AE863068CBAB00DE2C68 /* StudyClockWidgetExtension.appex */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		4C40AE873068CBAB00DE2C68 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				4C40AE883068CBAB00DE2C68 /* WidgetKit.framework */,
+				4C40AE8A3068CBAB00DE2C68 /* SwiftUI.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		4C40AE593068CB7B00DE2C68 /* StudyClock */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 4C40AE793068CB7E00DE2C68 /* Build configuration list for PBXNativeTarget "StudyClock" */;
+			buildPhases = (
+				4C40AE563068CB7B00DE2C68 /* Sources */,
+				4C40AE573068CB7B00DE2C68 /* Frameworks */,
+				4C40AE583068CB7B00DE2C68 /* Resources */,
+				4C40AE9B3068CBAE00DE2C68 /* Embed Foundation Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				4C40AE953068CBAE00DE2C68 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				4C40AE5C3068CB7B00DE2C68 /* StudyClock */,
+			);
+			name = StudyClock;
+			productName = StudyClock;
+			productReference = 4C40AE5A3068CB7B00DE2C68 /* StudyClock.app */;
+			productType = "com.apple.product-type.application";
+		};
+		4C40AE663068CB7E00DE2C68 /* StudyClockTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 4C40AE7C3068CB7E00DE2C68 /* Build configuration list for PBXNativeTarget "StudyClockTests" */;
+			buildPhases = (
+				4C40AE633068CB7E00DE2C68 /* Sources */,
+				4C40AE643068CB7E00DE2C68 /* Frameworks */,
+				4C40AE653068CB7E00DE2C68 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				4C40AE693068CB7E00DE2C68 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				4C40AE6A3068CB7E00DE2C68 /* StudyClockTests */,
+			);
+			name = StudyClockTests;
+			productName = StudyClockTests;
+			productReference = 4C40AE673068CB7E00DE2C68 /* StudyClockTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		4C40AE703068CB7E00DE2C68 /* StudyClockUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 4C40AE7F3068CB7E00DE2C68 /* Build configuration list for PBXNativeTarget "StudyClockUITests" */;
+			buildPhases = (
+				4C40AE6D3068CB7E00DE2C68 /* Sources */,
+				4C40AE6E3068CB7E00DE2C68 /* Frameworks */,
+				4C40AE6F3068CB7E00DE2C68 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				4C40AE733068CB7E00DE2C68 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				4C40AE743068CB7E00DE2C68 /* StudyClockUITests */,
+			);
+			name = StudyClockUITests;
+			productName = StudyClockUITests;
+			productReference = 4C40AE713068CB7E00DE2C68 /* StudyClockUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+		4C40AE853068CBAB00DE2C68 /* StudyClockWidgetExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 4C40AE983068CBAE00DE2C68 /* Build configuration list for PBXNativeTarget "StudyClockWidgetExtension" */;
+			buildPhases = (
+				4C40AE823068CBAB00DE2C68 /* Sources */,
+				4C40AE833068CBAB00DE2C68 /* Frameworks */,
+				4C40AE843068CBAB00DE2C68 /* Resources */,
+			);
+			buildRules = (
+			);
+			fileSystemSynchronizedGroups = (
+				4C40AE8C3068CBAB00DE2C68 /* StudyClockWidget */,
+			);
+			name = StudyClockWidgetExtension;
+			productName = StudyClockWidgetExtension;
+			productReference = 4C40AE863068CBAB00DE2C68 /* StudyClockWidgetExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		4C40AE523068CB7B00DE2C68 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2700;
+				LastUpgradeCheck = 2700;
+				TargetAttributes = {
+					4C40AE593068CB7B00DE2C68 = {
+						CreatedOnToolsVersion = 27.0;
+					};
+					4C40AE663068CB7E00DE2C68 = {
+						CreatedOnToolsVersion = 27.0;
+						TestTargetID = 4C40AE593068CB7B00DE2C68;
+					};
+					4C40AE703068CB7E00DE2C68 = {
+						CreatedOnToolsVersion = 27.0;
+						TestTargetID = 4C40AE593068CB7B00DE2C68;
+					};
+					4C40AE853068CBAB00DE2C68 = {
+						CreatedOnToolsVersion = 27.0;
+					};
+				};
+			};
+			buildConfigurationList = 4C40AE553068CB7B00DE2C68 /* Build configuration list for PBXProject "StudyClock" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 4C40AE513068CB7B00DE2C68;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 4C40AE5B3068CB7B00DE2C68 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				4C40AE593068CB7B00DE2C68 /* StudyClock */,
+				4C40AE663068CB7E00DE2C68 /* StudyClockTests */,
+				4C40AE703068CB7E00DE2C68 /* StudyClockUITests */,
+				4C40AE853068CBAB00DE2C68 /* StudyClockWidgetExtension */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		4C40AE583068CB7B00DE2C68 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			files = (
+			);
+		};
+		4C40AE653068CB7E00DE2C68 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			files = (
+			);
+		};
+		4C40AE6F3068CB7E00DE2C68 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			files = (
+			);
+		};
+		4C40AE843068CBAB00DE2C68 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			files = (
+			);
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		4C40AE563068CB7B00DE2C68 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			files = (
+			);
+		};
+		4C40AE633068CB7E00DE2C68 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			files = (
+			);
+		};
+		4C40AE6D3068CB7E00DE2C68 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			files = (
+			);
+		};
+		4C40AE823068CBAB00DE2C68 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			files = (
+			);
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		4C40AE693068CB7E00DE2C68 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 4C40AE593068CB7B00DE2C68 /* StudyClock */;
+			targetProxy = 4C40AE683068CB7E00DE2C68 /* PBXContainerItemProxy */;
+		};
+		4C40AE733068CB7E00DE2C68 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 4C40AE593068CB7B00DE2C68 /* StudyClock */;
+			targetProxy = 4C40AE723068CB7E00DE2C68 /* PBXContainerItemProxy */;
+		};
+		4C40AE953068CBAE00DE2C68 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 4C40AE853068CBAB00DE2C68 /* StudyClockWidgetExtension */;
+			targetProxy = 4C40AE943068CBAE00DE2C68 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		4C40AE773068CB7E00DE2C68 /* Debug configuration for PBXProject "StudyClock" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		4C40AE783068CB7E00DE2C68 /* Release configuration for PBXProject "StudyClock" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+			};
+			name = Release;
+		};
+		4C40AE7A3068CB7E00DE2C68 /* Debug configuration for PBXNativeTarget "StudyClock" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = StudyClock/StudyClock.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 6;
+				DEVELOPMENT_TEAM = JASSJ2R9D6;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SELECTED_FILES = readonly;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = StudyClock/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "钟";
+				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphoneos*]" = UIStatusBarStyleDefault;
+				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
+				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.tommywu.StudyClock;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
+				SDKROOT = auto;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2,7";
+				XROS_DEPLOYMENT_TARGET = 27.0;
+			};
+			name = Debug;
+		};
+		4C40AE7B3068CB7E00DE2C68 /* Release configuration for PBXNativeTarget "StudyClock" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = StudyClock/StudyClock.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 6;
+				DEVELOPMENT_TEAM = JASSJ2R9D6;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SELECTED_FILES = readonly;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = StudyClock/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "钟";
+				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphoneos*]" = UIStatusBarStyleDefault;
+				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
+				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.tommywu.StudyClock;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
+				SDKROOT = auto;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2,7";
+				XROS_DEPLOYMENT_TARGET = 27.0;
+			};
+			name = Release;
+		};
+		4C40AE7D3068CB7E00DE2C68 /* Debug configuration for PBXNativeTarget "StudyClockTests" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.tommywu.StudyClockTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2,7";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/StudyClock.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/StudyClock";
+				XROS_DEPLOYMENT_TARGET = 27.0;
+			};
+			name = Debug;
+		};
+		4C40AE7E3068CB7E00DE2C68 /* Release configuration for PBXNativeTarget "StudyClockTests" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.tommywu.StudyClockTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2,7";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/StudyClock.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/StudyClock";
+				XROS_DEPLOYMENT_TARGET = 27.0;
+			};
+			name = Release;
+		};
+		4C40AE803068CB7E00DE2C68 /* Debug configuration for PBXNativeTarget "StudyClockUITests" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.tommywu.StudyClockUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2,7";
+				TEST_TARGET_NAME = StudyClock;
+				XROS_DEPLOYMENT_TARGET = 27.0;
+			};
+			name = Debug;
+		};
+		4C40AE813068CB7E00DE2C68 /* Release configuration for PBXNativeTarget "StudyClockUITests" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.tommywu.StudyClockUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2,7";
+				TEST_TARGET_NAME = StudyClock;
+				XROS_DEPLOYMENT_TARGET = 27.0;
+			};
+			name = Release;
+		};
+		4C40AE993068CBAE00DE2C68 /* Debug configuration for PBXNativeTarget "StudyClockWidgetExtension" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = StudyClockWidgetExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 6;
+				DEVELOPMENT_TEAM = JASSJ2R9D6;
+				ENABLE_APP_SANDBOX = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = StudyClockWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "钟";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.tommywu.StudyClock.StudyClockWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
+				SDKROOT = auto;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = macosx;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2,7";
+				XROS_DEPLOYMENT_TARGET = 27.0;
+			};
+			name = Debug;
+		};
+		4C40AE9A3068CBAE00DE2C68 /* Release configuration for PBXNativeTarget "StudyClockWidgetExtension" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = StudyClockWidgetExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 6;
+				DEVELOPMENT_TEAM = JASSJ2R9D6;
+				ENABLE_APP_SANDBOX = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = StudyClockWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "钟";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.tommywu.StudyClock.StudyClockWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
+				SDKROOT = auto;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = macosx;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2,7";
+				XROS_DEPLOYMENT_TARGET = 27.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		4C40AE553068CB7B00DE2C68 /* Build configuration list for PBXProject "StudyClock" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4C40AE773068CB7E00DE2C68 /* Debug configuration for PBXProject "StudyClock" */,
+				4C40AE783068CB7E00DE2C68 /* Release configuration for PBXProject "StudyClock" */,
+			);
+			defaultConfigurationName = Release;
+		};
+		4C40AE793068CB7E00DE2C68 /* Build configuration list for PBXNativeTarget "StudyClock" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4C40AE7A3068CB7E00DE2C68 /* Debug configuration for PBXNativeTarget "StudyClock" */,
+				4C40AE7B3068CB7E00DE2C68 /* Release configuration for PBXNativeTarget "StudyClock" */,
+			);
+			defaultConfigurationName = Release;
+		};
+		4C40AE7C3068CB7E00DE2C68 /* Build configuration list for PBXNativeTarget "StudyClockTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4C40AE7D3068CB7E00DE2C68 /* Debug configuration for PBXNativeTarget "StudyClockTests" */,
+				4C40AE7E3068CB7E00DE2C68 /* Release configuration for PBXNativeTarget "StudyClockTests" */,
+			);
+			defaultConfigurationName = Release;
+		};
+		4C40AE7F3068CB7E00DE2C68 /* Build configuration list for PBXNativeTarget "StudyClockUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4C40AE803068CB7E00DE2C68 /* Debug configuration for PBXNativeTarget "StudyClockUITests" */,
+				4C40AE813068CB7E00DE2C68 /* Release configuration for PBXNativeTarget "StudyClockUITests" */,
+			);
+			defaultConfigurationName = Release;
+		};
+		4C40AE983068CBAE00DE2C68 /* Build configuration list for PBXNativeTarget "StudyClockWidgetExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4C40AE993068CBAE00DE2C68 /* Debug configuration for PBXNativeTarget "StudyClockWidgetExtension" */,
+				4C40AE9A3068CBAE00DE2C68 /* Release configuration for PBXNativeTarget "StudyClockWidgetExtension" */,
+			);
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 4C40AE523068CB7B00DE2C68 /* Project object */;
+	validationLevel = 1;
+}

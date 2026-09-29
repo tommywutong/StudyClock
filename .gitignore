@@ -1,0 +1,28 @@
+# Xcode / Swift
+.DS_Store
+build/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+*.xccheckout
+*.moved-aside
+*.pbxuser
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+*.xcscmblueprint
+.swiftpm/
+
+# Build products and diagnostics
+*.app
+*.dSYM
+*.dSYM.zip
+*.log
+
+# Local agent/session artifacts
+.superpowers/
+
+# Local secrets and environment files
+.env
+.env.*
+!.env.example
