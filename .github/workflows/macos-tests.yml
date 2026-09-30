@@ -1,0 +1,30 @@
+name: macOS Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  unit-tests:
+    name: StudyClockTests
+    runs-on: macos-15
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Run unsigned unit tests
+        run: |
+          xcodebuild test \
+            -project StudyClock.xcodeproj \
+            -scheme StudyClock \
+            -destination 'platform=macOS,arch=arm64' \
+            -only-testing:StudyClockTests \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO

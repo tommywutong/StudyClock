@@ -19,12 +19,12 @@
 
 ### 中号 Widget（`systemMedium`）
 
-- 顶部：`今日学习 · 正在计时`；暂停后改为 `今日学习 · 已暂停`。
-- 主视觉：当前（暂停后为最近）任务名、每日目标和累计时长。
-- 正在计时时显示绿色状态点；累计时长由 WidgetKit 系统动态渲染为秒级递增的等宽数字。
-- 主按钮为 `暂停` 或 `继续`。按钮的无障碍名称带任务名，例如“暂停算法练习”。
-- 底部：八股、算法、项目的今日累计时长和每日目标进度条。任务名称可配置时，仍按 `sortOrder` 展示全部任务，而不是把三项名称写死。
-- 除按钮外的卡片区域深链到 App 主页面。
+- 顶部显示 `今日学习 · 正在计时` 或 `今日学习 · 已暂停`，右侧显示今日总累计。
+- 主视觉保留三张横向任务卡，当前（暂停后为最近）任务固定在第一张并略宽；其余任务按既有展示顺序排列。
+- 每张卡显示任务名、`HH:MM:SS` 累计、明确状态文本和直接开始 / 暂停 / 继续操作；不改变任务切换逻辑。
+- 运行状态统一使用橙色状态点、文字、按钮色和轻量背景色；暂停状态使用系统次级灰色，状态文本不只依赖颜色表达。
+- 当前任务的任务名与时长使用更高对比度；卡片只使用连续圆角和低对比背景层级，不使用侧边强调条或纵向主卡。
+- 卡片区域深链到 App 主页面；每个操作按钮的无障碍名称带任务名。
 
 ### 小号 Widget（`systemSmall`）
 
@@ -63,7 +63,7 @@
 - 新建可跨 target 编译的 Widget 数据读取层，输出：任务列表、当前活动任务 ID、最近任务 ID、每日累计、每日目标、活动开始时间，以及来自 App Group `UserDefaults` 的最近刷新错误状态。
 - `TimerSnapshot` 仍由 `TimerReducer` 从事件流生成；为 Widget 增加读取“最近合法任务”的查询，不让视图自行推断事件排序。
 - 运行中任务的展示基准为 `referenceDate = entry.now - currentDayElapsed`；Widget 使用 SwiftUI 的 timer-style dynamic date 从该基准向上计时。这样已累计的时长和当前运行区间组成连续显示，但 Widget Extension 不需要逐秒执行。
-- Timeline 只生成“现在”和“下一次本地午夜”所需 entry；状态变更由 `WidgetCenter` 主动重载。WidgetKit 的刷新预算不用于秒表走动。
+- Timeline 只生成“现在”和“下一次本地午夜”所需 entry；状态变更由 `WidgetCenter` 主动重载。运行中的顶部总计使用与任务卡一致的 dynamic date；WidgetKit 的刷新预算不用于秒表走动。
 - Widget 支持 `systemSmall` 与 `systemMedium`；仅在 macOS 上注册这些 family。本轮不暴露 iOS Widget family。
 
 ## 交互
@@ -71,14 +71,14 @@
 ### App Intent
 
 - 新建 `ToggleStudyTimerIntent(taskID:)`，在 App 与 Widget Extension 两个 target 中编译。
-- Intent 打开 App Group `StudyStore`，基于执行时快照追加与 `TimerViewModel.toggle` 等价的 start/pause 事件，完成存储后刷新 `StudyClockWidget` 的 Timeline。
+- Intent 打开 App Group `StudyStore`，基于执行时快照追加与 `TimerViewModel.toggle` 等价的 start/pause 事件，完成存储后刷新 `StudyClockWidget` 的 Timeline，并在 macOS 通过跨进程通知让已打开的 App 重新读取共享快照。
 - Intent 返回成功结果前必须完成写入。出现持久化错误时捕获错误，将可显示的错误状态写入 App Group `UserDefaults` 并返回，不将错误抛给 WidgetKit。
 - 交互按钮采用 `Button(intent:)`；卡片导航采用 `widgetURL`，不把“打开 App”伪装成按钮行为。
 
 ## 代码组织
 
 - `Persistence/StudyStore.swift`：App Group 容器创建、幂等迁移、Widget 所需读取和原子 toggle 入口。
-- `Timer/TimerViewModel.swift`：成功改变状态后请求 Widget Timeline 刷新；保持现有主界面 API。
+- `Timer/TimerViewModel.swift`：成功改变状态后请求 Widget Timeline 刷新；监听 Widget 的 macOS 跨进程变更通知，并在 App 回到前台时重新读取共享快照；保持现有主界面 API。
 - 新建跨 target 的 Widget 状态 DTO / 查询层：隔离 SwiftData 模型与 Widget 视图。
 - 新建跨 target 的 `AppIntent`：共享 toggle 语义。
 - `StudyClockWidget/StudyClockWidget.swift`：用真实 Provider、entry 和 A 布局替换 Xcode 模板中的 `Time:` / 😀；保留 Widget Bundle。
