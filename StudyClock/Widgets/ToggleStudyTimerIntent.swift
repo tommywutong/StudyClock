@@ -30,6 +30,12 @@ struct ToggleStudyTimerIntent: AppIntent {
                 let store = try StudyStore.makeWidgetStore()
                 try store.toggle(taskID: taskID)
                 Self.writeWidgetStatus(nil)
+                #if os(macOS)
+                DistributedNotificationCenter.default().post(
+                    name: StudyStore.widgetDataDidChangeNotification,
+                    object: nil,
+                    userInfo: nil)
+                #endif
             } catch {
                 Self.writeWidgetStatus("无法更新计时，请打开 App 重试")
             }

@@ -80,12 +80,10 @@ struct StudyClockWidgetEntryView: View {
     private var mediumView: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 5) {
-                if entry.isRunning {
-                    Circle()
-                        .fill(.green)
-                        .frame(width: 7, height: 7)
-                        .accessibilityHidden(true)
-                }
+                Circle()
+                    .fill(entry.isRunning ? .orange : .secondary.opacity(0.45))
+                    .frame(width: 6, height: 6)
+                    .accessibilityHidden(true)
 
                 Text(entry.isRunning ? "今日学习 · 正在计时" : "今日学习 · 已暂停")
                     .font(.caption)
@@ -93,12 +91,8 @@ struct StudyClockWidgetEntryView: View {
 
                 Spacer(minLength: 0)
 
-                Text("今日 \(format(entry.totalElapsed))")
-                    .font(.caption2)
-                    .monospacedDigit()
-                    .foregroundStyle(.secondary)
+                totalElapsedView
             }
-
             HStack(spacing: 7) {
                 ForEach(Array(entry.displayTasks.prefix(3).enumerated()), id: \.element.id) { index, task in
                     StudyClockWidgetTimerCard(
@@ -184,6 +178,27 @@ struct StudyClockWidgetEntryView: View {
             .monospacedDigit()
     }
 
+    @ViewBuilder
+    private var totalElapsedView: some View {
+        HStack(spacing: 2) {
+            Text("今日")
+            if entry.isRunning {
+                Text(timerInterval: totalElapsedReferenceDate...Date.distantFuture,
+                     countsDown: false,
+                     showsHours: true)
+            } else {
+                Text(format(entry.totalElapsed))
+            }
+        }
+        .font(.caption2)
+        .monospacedDigit()
+        .foregroundStyle(.primary.opacity(0.65))
+    }
+
+    private var totalElapsedReferenceDate: Date {
+        entry.date.addingTimeInterval(-entry.totalElapsed)
+    }
+
     private static let dashboardURL = URL(string: "studyclock://dashboard")!
 
 }
@@ -196,9 +211,9 @@ private struct StudyClockWidgetTimerCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 5) {
-            Label(task.name, systemImage: isRunning ? "circle.fill" : "pause.fill")
-                .font(.caption2)
-                .foregroundStyle(isRunning ? .green : .secondary)
+            Label(task.name, systemImage: isRunning ? "circle.fill" : "circle")
+                .font(.caption2.weight(isPrimary ? .semibold : .regular))
+                .foregroundStyle(isRunning ? .orange : isPrimary ? .primary : .secondary)
                 .lineLimit(1)
 
             elapsed
@@ -208,21 +223,45 @@ private struct StudyClockWidgetTimerCard: View {
 
             Text(isRunning ? "正在计时" : "已暂停")
                 .font(.caption2)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(isRunning ? .orange : .secondary)
 
-            Button(intent: ToggleStudyTimerIntent(taskID: task.id.uuidString)) {
-                Text(actionTitle)
-                    .frame(maxWidth: .infinity)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            .buttonStyle(.borderedProminent)
-            .tint(isRunning ? .blue : .gray)
-            .controlSize(.mini)
-            .accessibilityLabel("\(actionTitle) \(task.name)")
+            actionButton
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(8)
-        .background(.quaternary, in: RoundedRectangle(cornerRadius: 12))
+        .background(
+            isRunning
+                ? Color.orange.opacity(isPrimary ? 0.13 : 0.08)
+                : Color.primary.opacity(isPrimary ? 0.08 : 0.045),
+            in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+    }
+
+    @ViewBuilder
+    private var actionButton: some View {
+        if isPrimary {
+            Button(intent: ToggleStudyTimerIntent(taskID: task.id.uuidString)) {
+                buttonLabel
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(isRunning ? .orange : .secondary)
+        } else {
+            Button(intent: ToggleStudyTimerIntent(taskID: task.id.uuidString)) {
+                buttonLabel
+            }
+            .buttonStyle(.bordered)
+            .tint(isRunning ? .orange : .secondary)
+        }
+    }
+
+    private var buttonLabel: some View {
+        Text(actionTitle)
+            .frame(maxWidth: .infinity)
+            .fixedSize(horizontal: false, vertical: true)
+            .accessibilityLabel(actionAccessibilityLabel)
+    }
+
+    private var actionAccessibilityLabel: String {
+        "\(actionTitle) \(task.name)"
     }
 
     @ViewBuilder

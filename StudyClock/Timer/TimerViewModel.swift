@@ -25,6 +25,10 @@ struct StudyDaySummary: Identifiable {
 @MainActor
 @Observable
 final class TimerViewModel {
+
+    #if os(macOS)
+    private var externalChangeObserver: NSObjectProtocol?
+    #endif
     private let store: StudyStore?
     private let reloader: any StudyClockWidgetReloading
 
@@ -46,8 +50,25 @@ final class TimerViewModel {
             store = nil
             initializationError = error.localizedDescription
         }
+        #if os(macOS)
+        externalChangeObserver = DistributedNotificationCenter.default().addObserver(
+            forName: StudyStore.widgetDataDidChangeNotification,
+            object: nil,
+            queue: .main) { [weak self] _ in
+                Task { @MainActor [weak self] in
+                    self?.refreshFromExternalStore()
+                }
+            }
+        #endif
         reload()
     }
+    #if os(macOS)
+    isolated deinit {
+        if let externalChangeObserver {
+            DistributedNotificationCenter.default().removeObserver(externalChangeObserver)
+        }
+    }
+    #endif
 
     convenience init(
         store: StudyStore? = nil,
@@ -137,5 +158,10 @@ final class TimerViewModel {
             errorMessage = error.localizedDescription
             return false
         }
+    }
+
+    @discardableResult
+    func refreshFromExternalStore(now: Date = .now) -> Bool {
+        reload(now: now)
     }
 }

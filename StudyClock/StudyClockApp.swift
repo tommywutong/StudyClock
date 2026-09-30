@@ -9,12 +9,17 @@ import SwiftUI
 
 @main
 struct StudyClockApp: App {
+    @Environment(\.scenePhase) private var scenePhase
     @State private var viewModel = TimerViewModel()
 
     var body: some Scene {
         WindowGroup {
             ContentView(viewModel: viewModel)
                 .task { viewModel.reload() }
+                .onChange(of: scenePhase) { _, phase in
+                    guard phase == .active else { return }
+                    viewModel.refreshFromExternalStore()
+                }
         }
 
         #if os(macOS)

@@ -386,6 +386,30 @@ struct StudyClockTests {
     }
 
     @MainActor
+    @Test func externalStoreMutationRefreshesApplicationSnapshot() throws {
+        let url = temporaryStoreURL("external-refresh")
+        let appStore = try StudyStore.makePersistent(at: url)
+        let viewModel = TimerViewModel(store: appStore)
+        let task = try #require(viewModel.tasks.first)
+        let start = Date(timeIntervalSince1970: 1_000)
+        let pause = Date(timeIntervalSince1970: 1_060)
+
+        try StudyStore.makePersistent(at: url).start(taskID: task.id, at: start)
+        viewModel.refreshFromExternalStore(now: pause)
+
+        #expect(viewModel.snapshot.activeTaskID == task.id)
+        #expect(viewModel.snapshot.elapsed(
+            taskID: task.id, on: start, calendar: utcCalendar, now: pause) == 60)
+
+        try StudyStore.makePersistent(at: url).pause(taskID: task.id, at: pause)
+        viewModel.refreshFromExternalStore(now: pause)
+
+        #expect(viewModel.snapshot.activeTaskID == nil)
+        #expect(viewModel.snapshot.elapsed(
+            taskID: task.id, on: start, calendar: utcCalendar, now: pause) == 60)
+    }
+
+    @MainActor
     @Test func successfulTimerToggleReloadsWidgetTimeline() throws {
         let reloader = RecordingWidgetReloader()
         let viewModel = TimerViewModel(store: try StudyStore.makeInMemory(), reloader: reloader)

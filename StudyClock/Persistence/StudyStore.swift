@@ -25,6 +25,8 @@ enum StudyStoreError: LocalizedError {
 final class StudyStore {
     static let appGroupIdentifier = "group.com.tommywu.StudyClock"
     static let widgetKind = "StudyClockWidget"
+    static let widgetDataDidChangeNotification = Notification.Name(
+        "com.tommywu.StudyClock.widgetDataDidChange")
     static let widgetStatusMessageKey = "StudyClockWidget.statusMessage"
 
     private static let migrationVersion = 1
