@@ -13,7 +13,7 @@ permissions:
 jobs:
   unit-tests:
     name: StudyClockTests
-    runs-on: macos-15
+    runs-on: xcode-27
 
     steps:
       - name: Check out repository
