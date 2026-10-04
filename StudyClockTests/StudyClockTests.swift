@@ -86,6 +86,47 @@ struct StudyClockTests {
         #expect(snapshot.elapsed(taskID: tasks[1].id, on: today, calendar: calendar, now: pauseB) == 1_200)
         #expect(snapshot.activeTaskID == nil)
     }
+    @MainActor
+    @Test func resettingActiveTaskClearsTodayStopsItAndPreservesPreviousDay() throws {
+        let store = try StudyStore.makeInMemory()
+        try store.seedDefaultsIfNeeded()
+        let task = try #require(store.tasks().first)
+        let startedAt = Date(timeIntervalSince1970: 86_300)
+        let resetAt = Date(timeIntervalSince1970: 86_500)
+        let previousDay = utcCalendar.startOfDay(for: startedAt)
+        let resetDay = utcCalendar.startOfDay(for: resetAt)
+
+        try store.start(taskID: task.id, at: startedAt)
+        try store.resetToday(taskID: task.id, at: resetAt)
+
+        let snapshot = try store.snapshot(now: resetAt, calendar: utcCalendar)
+        #expect(snapshot.activeTaskID == nil)
+        #expect(snapshot.elapsed(taskID: task.id, on: resetDay, calendar: utcCalendar, now: resetAt) == 0)
+        #expect(snapshot.elapsed(taskID: task.id, on: previousDay, calendar: utcCalendar, now: resetAt) == 100)
+    }
+
+    @MainActor
+    @Test func resettingInactiveTaskDoesNotStopAnotherRunningTask() throws {
+        let store = try StudyStore.makeInMemory()
+        try store.seedDefaultsIfNeeded()
+        let tasks = try store.tasks()
+        let runningTask = tasks[0]
+        let resetTask = tasks[1]
+        let resetStart = Date(timeIntervalSince1970: 1_000)
+        let resetPause = Date(timeIntervalSince1970: 1_050)
+        let runningStart = Date(timeIntervalSince1970: 1_100)
+        let resetTime = Date(timeIntervalSince1970: 1_200)
+
+        try store.start(taskID: resetTask.id, at: resetStart)
+        try store.pause(taskID: resetTask.id, at: resetPause)
+        try store.start(taskID: runningTask.id, at: runningStart)
+        try store.resetToday(taskID: resetTask.id, at: resetTime)
+
+        let snapshot = try store.snapshot(now: resetTime, calendar: utcCalendar)
+        #expect(snapshot.activeTaskID == runningTask.id)
+        #expect(snapshot.elapsed(taskID: resetTask.id, on: resetStart, calendar: utcCalendar, now: resetTime) == 0)
+        #expect(snapshot.elapsed(taskID: runningTask.id, on: runningStart, calendar: utcCalendar, now: resetTime) == 100)
+    }
 
     @MainActor
     @Test func emptyHistoryHasNoDays() throws {
@@ -418,6 +459,340 @@ struct StudyClockTests {
         viewModel.toggle(taskID: task.id, at: Date(timeIntervalSince1970: 1_000))
 
         #expect(reloader.reloadCount == 1)
+    }
+    @Test func statisticsUseAdjacentCompleteLocalDayWindows() {
+        let taskID = UUID(uuidString: "A0000000-0000-4000-8000-000000000001")!
+        let snapshot = TimerSnapshot(
+            intervals: [
+                TimerInterval(taskID: taskID, start: makeDate(2025, 1, 14, hour: 8, calendar: utcCalendar), end: makeDate(2025, 1, 14, hour: 9, calendar: utcCalendar)),
+                TimerInterval(taskID: taskID, start: makeDate(2025, 1, 7, hour: 8, calendar: utcCalendar), end: makeDate(2025, 1, 7, hour: 10, calendar: utcCalendar)),
+                TimerInterval(taskID: taskID, start: makeDate(2025, 1, 15, hour: 0, calendar: utcCalendar), end: makeDate(2025, 1, 15, hour: 1, calendar: utcCalendar))
+            ],
+            activeTaskID: nil,
+            activeStartedAt: nil,
+            conflictingActionIDs: [])
+        let report = StudyStatisticsCalculator.calculate(
+            tasks: [.init(id: taskID, name: "八股", dailyGoalSeconds: 3_600, sortOrder: 0)],
+            snapshot: snapshot,
+            period: .sevenDays,
+            now: makeDate(2025, 1, 15, hour: 12, calendar: utcCalendar),
+            calendar: utcCalendar)
+
+        #expect(report.periodStart == makeDate(2025, 1, 8, calendar: utcCalendar))
+        #expect(report.previousPeriodStart == makeDate(2025, 1, 1, calendar: utcCalendar))
+        #expect(report.periodEnd == makeDate(2025, 1, 15, calendar: utcCalendar))
+        #expect(report.elapsed == 3_600)
+        #expect(report.previousElapsed == 7_200)
+        #expect(report.elapsedChange == -3_600)
+        #expect(report.elapsedRelativeChange == -0.5)
+        #expect(report.goalCompletionRate == 1.0 / 7.0)
+        #expect(report.previousGoalCompletionRate == 2.0 / 7.0)
+        #expect(report.goalCompletionChangePercentagePoints.map { abs($0 + 100.0 / 7.0) < 0.000_001 } == true)
+    }
+
+    @Test func statisticsSplitCrossMidnightIntervalsAndCountZeroDaysInAverage() {
+        let taskID = UUID()
+        let snapshot = TimerSnapshot(
+            intervals: [TimerInterval(
+                taskID: taskID,
+                start: makeDate(2025, 1, 7, hour: 23, minute: 30, calendar: utcCalendar),
+                end: makeDate(2025, 1, 8, hour: 1, calendar: utcCalendar)
+            )],
+            activeTaskID: nil,
+            activeStartedAt: nil,
+            conflictingActionIDs: [])
+        let report = StudyStatisticsCalculator.calculate(
+            tasks: [.init(id: taskID, name: "八股", dailyGoalSeconds: 3_600, sortOrder: 0)],
+            snapshot: snapshot,
+            period: .sevenDays,
+            now: makeDate(2025, 1, 15, hour: 12, calendar: utcCalendar),
+            calendar: utcCalendar)
+
+        #expect(report.elapsed == 3_600)
+        #expect(report.previousElapsed == 1_800)
+        #expect(report.tasks[0].averageDailyElapsed == 3_600.0 / 7.0)
+        #expect(report.tasks[0].goalAttainmentDays == 1)
+        #expect(report.tasks[0].previousGoalAttainmentDays == 0)
+    }
+
+    @Test func statisticsUseCalendarDayBoundariesAcrossDaylightSavingTime() {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(identifier: "America/Los_Angeles")!
+        let taskID = UUID()
+        let snapshot = TimerSnapshot(
+            intervals: [TimerInterval(
+                taskID: taskID,
+                start: makeDate(2024, 3, 10, calendar: calendar),
+                end: makeDate(2024, 3, 11, calendar: calendar)
+            )],
+            activeTaskID: nil,
+            activeStartedAt: nil,
+            conflictingActionIDs: [])
+        let report = StudyStatisticsCalculator.calculate(
+            tasks: [.init(id: taskID, name: "DST", dailyGoalSeconds: 0, sortOrder: 0)],
+            snapshot: snapshot,
+            period: .sevenDays,
+            now: makeDate(2024, 3, 12, hour: 12, calendar: calendar),
+            calendar: calendar)
+
+        #expect(report.elapsed == 23 * 60 * 60)
+        #expect(report.periodEnd == makeDate(2024, 3, 12, calendar: calendar))
+    }
+
+    @Test func statisticsUseAllConfiguredWindowLengths() {
+        let snapshot = TimerSnapshot(
+            intervals: [],
+            activeTaskID: nil,
+            activeStartedAt: nil,
+            conflictingActionIDs: [])
+        let now = makeDate(2025, 1, 15, hour: 12, calendar: utcCalendar)
+        let cases: [(StudyStatisticsPeriod, Date, Date)] = [
+            (.sevenDays, makeDate(2025, 1, 8, calendar: utcCalendar), makeDate(2025, 1, 1, calendar: utcCalendar)),
+            (.fifteenDays, makeDate(2024, 12, 31, calendar: utcCalendar), makeDate(2024, 12, 16, calendar: utcCalendar)),
+            (.thirtyDays, makeDate(2024, 12, 16, calendar: utcCalendar), makeDate(2024, 11, 16, calendar: utcCalendar))
+        ]
+
+        for (period, expectedStart, expectedPreviousStart) in cases {
+            let report = StudyStatisticsCalculator.calculate(
+                tasks: [], snapshot: snapshot, period: period, now: now, calendar: utcCalendar)
+
+            #expect(report.periodStart == expectedStart)
+            #expect(report.previousPeriodStart == expectedPreviousStart)
+            #expect(report.periodEnd == makeDate(2025, 1, 15, calendar: utcCalendar))
+        }
+    }
+
+    @Test func statisticsKeepNoGoalTimeInShareButExcludeItFromGoalCompletion() {
+        let goalTaskID = UUID()
+        let noGoalTaskID = UUID()
+        let snapshot = TimerSnapshot(
+            intervals: [
+                TimerInterval(taskID: goalTaskID, start: makeDate(2025, 1, 14, hour: 8, calendar: utcCalendar), end: makeDate(2025, 1, 14, hour: 9, calendar: utcCalendar)),
+                TimerInterval(taskID: noGoalTaskID, start: makeDate(2025, 1, 13, hour: 8, calendar: utcCalendar), end: makeDate(2025, 1, 13, hour: 10, calendar: utcCalendar))
+            ],
+            activeTaskID: nil,
+            activeStartedAt: nil,
+            conflictingActionIDs: [])
+        let report = StudyStatisticsCalculator.calculate(
+            tasks: [
+                .init(id: goalTaskID, name: "目标任务", dailyGoalSeconds: 3_600, sortOrder: 0),
+                .init(id: noGoalTaskID, name: "无目标", dailyGoalSeconds: 0, sortOrder: 1)
+            ],
+            snapshot: snapshot,
+            period: .sevenDays,
+            now: makeDate(2025, 1, 15, hour: 12, calendar: utcCalendar),
+            calendar: utcCalendar)
+
+        #expect(report.elapsed == 10_800)
+        #expect(report.tasks[0].share.map { abs($0 - 1.0 / 3.0) < 0.000_001 } == true)
+        #expect(report.tasks[1].share.map { abs($0 - 2.0 / 3.0) < 0.000_001 } == true)
+        #expect(report.goalElapsed == 25_200)
+        #expect(report.goalCompletionRate == 1.0 / 7.0)
+        #expect(report.goalCompletionChangePercentagePoints.map { abs($0 - 100.0 / 7.0) < 0.000_001 } == true)
+        #expect(report.tasks[0].previousGoalCompletionRate == 0)
+        #expect(report.tasks[0].goalCompletionChangePercentagePoints.map { abs($0 - 100.0 / 7.0) < 0.000_001 } == true)
+        #expect(report.tasks[1].goalCompletionRate == nil)
+        #expect(report.tasks[1].goalAttainmentDays == nil)
+    }
+
+    @Test func statisticsMarkOverallGoalNotSetWhenNoTaskHasAPositiveGoal() {
+        let taskID = UUID()
+        let snapshot = TimerSnapshot(
+            intervals: [TimerInterval(
+                taskID: taskID,
+                start: makeDate(2025, 1, 14, hour: 8, calendar: utcCalendar),
+                end: makeDate(2025, 1, 14, hour: 9, calendar: utcCalendar)
+            )],
+            activeTaskID: nil,
+            activeStartedAt: nil,
+            conflictingActionIDs: [])
+        let report = StudyStatisticsCalculator.calculate(
+            tasks: [.init(id: taskID, name: "无目标", dailyGoalSeconds: 0, sortOrder: 0)],
+            snapshot: snapshot,
+            period: .sevenDays,
+            now: makeDate(2025, 1, 15, hour: 12, calendar: utcCalendar),
+            calendar: utcCalendar)
+
+        #expect(report.elapsed == 3_600)
+        #expect(report.goalElapsed == 0)
+        #expect(report.goalCompletionRate == nil)
+        #expect(report.tasks[0].goalCompletionRate == nil)
+        #expect(report.tasks[0].goalAttainmentDays == nil)
+    }
+
+    @Test func statisticsOrderTaskSummariesBySortOrder() {
+        let firstID = UUID()
+        let secondID = UUID()
+        let snapshot = TimerSnapshot(
+            intervals: [],
+            activeTaskID: nil,
+            activeStartedAt: nil,
+            conflictingActionIDs: [])
+        let report = StudyStatisticsCalculator.calculate(
+            tasks: [
+                .init(id: secondID, name: "第二项", dailyGoalSeconds: 0, sortOrder: 1),
+                .init(id: firstID, name: "第一项", dailyGoalSeconds: 0, sortOrder: 0)
+            ],
+            snapshot: snapshot,
+            period: .sevenDays,
+            now: makeDate(2025, 1, 15, hour: 12, calendar: utcCalendar),
+            calendar: utcCalendar)
+
+        #expect(report.tasks.map(\.name) == ["第一项", "第二项"])
+    }
+
+    @Test func statisticsRepresentZeroComparisonBaselineWithoutNonFiniteValues() {
+        let taskID = UUID()
+        let snapshot = TimerSnapshot(
+            intervals: [TimerInterval(
+                taskID: taskID,
+                start: makeDate(2025, 1, 14, hour: 8, calendar: utcCalendar),
+                end: makeDate(2025, 1, 14, hour: 9, calendar: utcCalendar)
+            )],
+            activeTaskID: nil,
+            activeStartedAt: nil,
+            conflictingActionIDs: [])
+        let report = StudyStatisticsCalculator.calculate(
+            tasks: [.init(id: taskID, name: "八股", dailyGoalSeconds: 3_600, sortOrder: 0)],
+            snapshot: snapshot,
+            period: .sevenDays,
+            now: makeDate(2025, 1, 15, hour: 12, calendar: utcCalendar),
+            calendar: utcCalendar)
+
+        #expect(report.elapsed == 3_600)
+        #expect(report.previousElapsed == 0)
+        #expect(report.elapsedRelativeChange == nil)
+        #expect(report.goalCompletionRate?.isFinite == true)
+        #expect(report.previousGoalCompletionRate == 0)
+    }
+
+    @Test func statisticsRepresentEmptyHistoryWithoutNaNOrInfinity() {
+        let taskID = UUID()
+        let snapshot = TimerSnapshot(
+            intervals: [],
+            activeTaskID: nil,
+            activeStartedAt: nil,
+            conflictingActionIDs: [])
+        let report = StudyStatisticsCalculator.calculate(
+            tasks: [.init(id: taskID, name: "八股", dailyGoalSeconds: 3_600, sortOrder: 0)],
+            snapshot: snapshot,
+            period: .sevenDays,
+            now: makeDate(2025, 1, 15, hour: 12, calendar: utcCalendar),
+            calendar: utcCalendar)
+
+        #expect(report.hasHistory == false)
+        #expect(report.elapsed == 0)
+        #expect(report.elapsedRelativeChange == nil)
+        #expect(report.goalCompletionRate == 0)
+        #expect(report.tasks[0].share == nil)
+        #expect(report.tasks[0].goalCompletionRate == 0)
+    }
+
+    @Test func statisticsCountAnActiveTodayTimerAsHistoryButExcludeToday() {
+        let taskID = UUID()
+        let snapshot = TimerSnapshot(
+            intervals: [],
+            activeTaskID: taskID,
+            activeStartedAt: makeDate(2025, 1, 15, hour: 8, calendar: utcCalendar),
+            conflictingActionIDs: [])
+        let report = StudyStatisticsCalculator.calculate(
+            tasks: [.init(id: taskID, name: "八股", dailyGoalSeconds: 3_600, sortOrder: 0)],
+            snapshot: snapshot,
+            period: .sevenDays,
+            now: makeDate(2025, 1, 15, hour: 12, calendar: utcCalendar),
+            calendar: utcCalendar)
+
+        #expect(report.hasHistory)
+        #expect(report.elapsed == 0)
+        #expect(report.previousElapsed == 0)
+        #expect(report.tasks[0].share == nil)
+    }
+
+    @Test func statisticsRepresentTwoZeroPeriodsWithOlderHistoryWithoutRelativeChange() {
+        let taskID = UUID()
+        let snapshot = TimerSnapshot(
+            intervals: [TimerInterval(
+                taskID: taskID,
+                start: makeDate(2024, 12, 20, hour: 8, calendar: utcCalendar),
+                end: makeDate(2024, 12, 20, hour: 9, calendar: utcCalendar)
+            )],
+            activeTaskID: nil,
+            activeStartedAt: nil,
+            conflictingActionIDs: [])
+        let report = StudyStatisticsCalculator.calculate(
+            tasks: [.init(id: taskID, name: "八股", dailyGoalSeconds: 3_600, sortOrder: 0)],
+            snapshot: snapshot,
+            period: .sevenDays,
+            now: makeDate(2025, 1, 15, hour: 12, calendar: utcCalendar),
+            calendar: utcCalendar)
+
+        #expect(report.hasHistory)
+        #expect(report.elapsed == 0)
+        #expect(report.previousElapsed == 0)
+        #expect(report.elapsedRelativeChange == nil)
+        #expect(report.tasks[0].share == nil)
+    }
+
+    @Test func statisticsKeepActualCompletionAboveOneWhileProgressCanBeClampedByTheView() {
+        let taskID = UUID()
+        let snapshot = TimerSnapshot(
+            intervals: [TimerInterval(
+                taskID: taskID,
+                start: makeDate(2025, 1, 14, hour: 8, calendar: utcCalendar),
+                end: makeDate(2025, 1, 14, hour: 16, calendar: utcCalendar)
+            )],
+            activeTaskID: nil,
+            activeStartedAt: nil,
+            conflictingActionIDs: [])
+        let report = StudyStatisticsCalculator.calculate(
+            tasks: [.init(id: taskID, name: "八股", dailyGoalSeconds: 3_600, sortOrder: 0)],
+            snapshot: snapshot,
+            period: .sevenDays,
+            now: makeDate(2025, 1, 15, hour: 12, calendar: utcCalendar),
+            calendar: utcCalendar)
+
+        #expect(report.tasks[0].goalCompletionRate == 8.0 / 7.0)
+        #expect((report.tasks[0].goalCompletionRate ?? 0) > 1)
+    }
+
+    @MainActor
+    @Test func viewModelStatisticsMapsPersistedTasksAndSnapshot() throws {
+        let store = try StudyStore.makeInMemory()
+        let viewModel = TimerViewModel(store: store)
+        let tasks = try store.tasks()
+        let calendar = utcCalendar
+        let now = makeDate(2025, 1, 15, hour: 12, calendar: calendar)
+        try store.start(taskID: tasks[0].id, at: makeDate(2025, 1, 14, hour: 8, calendar: calendar))
+        try store.pause(taskID: tasks[0].id, at: makeDate(2025, 1, 14, hour: 9, calendar: calendar))
+        try store.start(taskID: tasks[1].id, at: makeDate(2025, 1, 7, hour: 8, calendar: calendar))
+        try store.pause(taskID: tasks[1].id, at: makeDate(2025, 1, 7, hour: 10, calendar: calendar))
+        #expect(viewModel.reload(now: now))
+
+        let report = viewModel.studyStatistics(for: .sevenDays, now: now, calendar: calendar)
+        #expect(report.elapsed == 3_600)
+        #expect(report.previousElapsed == 7_200)
+        #expect(report.elapsedChange == -3_600)
+        #expect(report.elapsedRelativeChange == -0.5)
+        #expect(report.tasks.map(\.name) == ["八股", "算法", "项目整理"])
+        #expect(report.tasks[0].goalElapsed == 75_600)
+    }
+
+    private func makeDate(
+        _ year: Int,
+        _ month: Int,
+        _ day: Int,
+        hour: Int = 0,
+        minute: Int = 0,
+        calendar: Calendar
+    ) -> Date {
+        var components = DateComponents()
+        components.year = year
+        components.month = month
+        components.day = day
+        components.hour = hour
+        components.minute = minute
+        components.timeZone = calendar.timeZone
+        return calendar.date(from: components)!
     }
 }
 

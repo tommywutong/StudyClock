@@ -2,7 +2,14 @@ import SwiftUI
 
 struct TimerDashboardView: View {
     let viewModel: TimerViewModel
-    @State private var showingHistory = false
+    @State private var presentedSheet: DashboardSheet?
+
+    private enum DashboardSheet: String, Identifiable {
+        case history
+        case statistics
+
+        var id: String { rawValue }
+    }
 
     var body: some View {
         Group {
@@ -50,15 +57,27 @@ struct TimerDashboardView: View {
                     .toolbar {
                         ToolbarItem(placement: .automatic) {
                             Button("历史", systemImage: "clock.arrow.circlepath") {
-                                showingHistory = true
+                                presentedSheet = .history
                             }
                             .accessibilityLabel("查看学习历史")
                         }
+                        ToolbarItem(placement: .automatic) {
+                            Button("统计", systemImage: "chart.bar") {
+                                presentedSheet = .statistics
+                            }
+                            .accessibilityLabel("查看学习统计")
+                        }
                     }
                 }
-                .sheet(isPresented: $showingHistory) {
-                    HistoryView(viewModel: viewModel, now: .now)
-                        .frame(minWidth: 340, minHeight: 360)
+                .sheet(item: $presentedSheet) { destination in
+                    switch destination {
+                    case .history:
+                        HistoryView(viewModel: viewModel, now: .now)
+                            .frame(minWidth: 340, minHeight: 360)
+                    case .statistics:
+                        StudyStatisticsView(viewModel: viewModel)
+                            .frame(minWidth: 440, minHeight: 520)
+                    }
                 }
             }
         }

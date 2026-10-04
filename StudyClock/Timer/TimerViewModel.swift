@@ -33,6 +33,16 @@ final class TimerViewModel {
     private let reloader: any StudyClockWidgetReloading
 
     private(set) var tasks: [StudyTaskRecord] = []
+
+    var studyStatisticsTasks: [StudyStatisticsTaskInput] {
+        tasks.map { task in
+            StudyStatisticsTaskInput(
+                id: task.id,
+                name: task.name,
+                dailyGoalSeconds: task.dailyGoalSeconds,
+                sortOrder: task.sortOrder)
+        }
+    }
     private(set) var snapshot = TimerSnapshot(
         intervals: [], activeTaskID: nil, activeStartedAt: nil, conflictingActionIDs: [])
     private(set) var initializationError: String?
@@ -126,6 +136,19 @@ final class TimerViewModel {
             errorMessage = error.localizedDescription
             return []
         }
+    }
+
+    func studyStatistics(
+        for period: StudyStatisticsPeriod,
+        now: Date,
+        calendar: Calendar
+    ) -> StudyStatisticsReport {
+        return StudyStatisticsCalculator.calculate(
+            tasks: studyStatisticsTasks,
+            snapshot: snapshot,
+            period: period,
+            now: now,
+            calendar: calendar)
     }
 
     func updateTask(id: UUID, name: String, dailyGoalSeconds: Int) {

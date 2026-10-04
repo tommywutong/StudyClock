@@ -211,10 +211,16 @@ private struct StudyClockWidgetTimerCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 5) {
-            Label(task.name, systemImage: isRunning ? "circle.fill" : "circle")
-                .font(.caption2.weight(isPrimary ? .semibold : .regular))
-                .foregroundStyle(isRunning ? .orange : isPrimary ? .primary : .secondary)
-                .lineLimit(1)
+            HStack(alignment: .top, spacing: 4) {
+                Label(task.name, systemImage: isRunning ? "circle.fill" : "circle")
+                    .font(.caption2.weight(isPrimary ? .semibold : .regular))
+                    .foregroundStyle(isRunning ? .orange : isPrimary ? .primary : .secondary)
+                    .lineLimit(1)
+
+                Spacer(minLength: 0)
+
+                resetButton
+            }
 
             elapsed
                 .font(isPrimary ? .title3.weight(.bold) : .headline.weight(.bold))
@@ -234,6 +240,16 @@ private struct StudyClockWidgetTimerCard: View {
                 ? Color.orange.opacity(isPrimary ? 0.13 : 0.08)
                 : Color.primary.opacity(isPrimary ? 0.08 : 0.045),
             in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+    }
+
+    private var resetButton: some View {
+        Button(intent: ResetStudyTimerIntent(taskID: task.id.uuidString)) {
+            Image(systemName: "arrow.clockwise")
+                .font(.caption2.weight(.semibold))
+                .frame(width: 20, height: 20)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("重置 \(task.name) 今日计时")
     }
 
     @ViewBuilder

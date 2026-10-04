@@ -11,7 +11,11 @@ enum TimerReducer {
         var active: ActiveTimer?
         var accepted: [TimerActionValue] = []
 
-        for action in uniqueActions where apply(action, active: &active, recordingInterval: { _ in }) {
+        for action in uniqueActions where apply(
+            action,
+            active: &active,
+            recordingInterval: { _ in },
+            recordingReset: { _, _ in }) {
             accepted.append(action)
         }
 
@@ -35,15 +39,21 @@ enum TimerReducer {
 
         var active: ActiveTimer?
         var intervals: [TimerInterval] = []
+        var resetAtByTask: [UUID: Date] = [:]
         for action in uniqueActions {
-            _ = apply(action, active: &active) { intervals.append($0) }
+            _ = apply(
+                action,
+                active: &active,
+                recordingInterval: { intervals.append($0) },
+                recordingReset: { taskID, date in resetAtByTask[taskID] = date })
         }
 
         return TimerSnapshot(
             intervals: intervals,
             activeTaskID: active?.taskID,
             activeStartedAt: active?.startedAt,
-            conflictingActionIDs: conflicts)
+            conflictingActionIDs: conflicts,
+            resetAtByTask: resetAtByTask)
     }
 
     private static func uniqueActions(in actions: [TimerActionValue]) -> [TimerActionValue] {
@@ -55,7 +65,8 @@ enum TimerReducer {
     private static func apply(
         _ action: TimerActionValue,
         active: inout ActiveTimer?,
-        recordingInterval: (TimerInterval) -> Void
+        recordingInterval: (TimerInterval) -> Void,
+        recordingReset: (UUID, Date) -> Void
     ) -> Bool {
         switch action.kind {
         case .start:
@@ -74,6 +85,17 @@ enum TimerReducer {
                     taskID: current.taskID, start: current.startedAt, end: action.happenedAt))
             }
             active = nil
+            return true
+
+        case .reset:
+            if let current = active, current.taskID == action.taskID {
+                if action.happenedAt > current.startedAt {
+                    recordingInterval(TimerInterval(
+                        taskID: current.taskID, start: current.startedAt, end: action.happenedAt))
+                }
+                active = nil
+            }
+            recordingReset(action.taskID, action.happenedAt)
             return true
         }
     }

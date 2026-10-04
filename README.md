@@ -7,13 +7,15 @@
 ## 功能
 
 - 三个相互独立的学习任务，可在任务之间切换计时
-- 事件流记录开始、暂停和切换，避免直接覆盖累计时长
+- 事件流记录开始、暂停、切换和当天重置，避免直接覆盖累计时长
 - 主 App、菜单栏入口和通知中心 Widget 读取同一份本地计时数据
-- 中号 Widget 显示三张任务卡，可直接开始、暂停或继续任务
+- 中号 Widget 显示三张任务卡，可直接开始、暂停或继续任务；每张卡右上角可重置该任务当天累计，重置正在计时的任务时会同时暂停
 - 小号 Widget 显示当前或最近任务
 - Widget 运行中的时间使用系统动态计时显示，不通过每秒写库或刷新 Timeline 实现
 - Widget 操作后同步刷新已经打开的 App；App 回到前台时也会重新读取共享状态
 - 学习历史按本地日期汇总，支持跨午夜区间计算
+- 主 App 统计页按任务和总体汇总近 7 / 15 / 30 个完整本地日（不含今天），并与紧邻的前一同长度周期比较
+- 历史目标按任务当前每日目标回算并明确标为估算；不保留目标历史。统计在本地 App 内完成，不改变 Widget 的界面和行为
 - 首次从旧默认 SwiftData 容器迁移到 App Group 共享容器时保留历史记录
 
 ## 运行要求
@@ -106,10 +108,10 @@ Widget Intent ──────┘
 
 ```text
 StudyClock/
-├── Domain/                  # 事件值、Reducer、快照和进度计算
+├── Domain/                  # 事件值、Reducer、快照、进度和本地统计计算
 ├── Persistence/             # SwiftData、App Group、迁移和共享查询
 ├── Timer/                   # 主 App 的计时状态与 Widget 刷新
-├── Views/                   # 主 App 仪表盘、历史和任务行
+├── Views/                   # 主 App 仪表盘、历史、统计和任务行
 ├── Widgets/                 # Widget Intent 和跨 target DTO
 ├── Mac/                     # macOS 菜单栏入口
 ├── StudyClockApp.swift      # App scene 与前台刷新
@@ -123,13 +125,15 @@ StudyClock/
 - Widget 当前仅注册 macOS `systemSmall` 和 `systemMedium` family。
 - Widget 内可以操作计时，但任务的完整排序和编辑仍在主 App 完成。
 - 当前只保证本机 App Group 共享，不提供跨设备同步。
-- 没有账号、云同步、CloudKit、统计服务或远程 API。
+- 不提供账号、云同步、CloudKit、远程统计服务或远程 API；统计数据仅由本地 App 汇总。
 - 许可证尚未声明；在添加明确许可证前，不应默认拥有任意开源再分发权限。
 
 ## 设计记录
 
 - [macOS Widget 设计说明](docs/superpowers/specs/2026-09-28-macos-native-study-widget-design.md)
 - [macOS Widget 实现计划](docs/superpowers/plans/2026-09-28-macos-native-study-widget.md)
+- [本地学习统计设计说明](docs/superpowers/specs/2026-10-01-study-statistics-design.md)
+- [本地学习统计实施计划](docs/superpowers/plans/2026-10-01-study-statistics.md)
 
 ## 反馈
 

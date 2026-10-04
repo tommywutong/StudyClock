@@ -39,6 +39,35 @@ final class StudyClockUITests: XCTestCase {
     }
 
     @MainActor
+    func testStatisticsPageOpensAndChangesPeriod() throws {
+        let app = XCUIApplication()
+        app.launch()
+
+        let statisticsButton = app.buttons["查看学习统计"]
+        XCTAssertTrue(statisticsButton.waitForExistence(timeout: 5))
+        statisticsButton.tap()
+
+        let period7Button = app.buttons["statistics-period-7"]
+        XCTAssertTrue(period7Button.waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["近 7 天"].waitForExistence(timeout: 5))
+
+        let period15Button = app.buttons["statistics-period-15"]
+        XCTAssertTrue(period15Button.waitForExistence(timeout: 5))
+        period15Button.tap()
+        XCTAssertTrue(app.staticTexts["近 15 天"].waitForExistence(timeout: 5))
+
+        let period30Button = app.buttons["statistics-period-30"]
+        XCTAssertTrue(period30Button.waitForExistence(timeout: 5))
+        period30Button.tap()
+        XCTAssertTrue(app.staticTexts["近 30 天"].waitForExistence(timeout: 5))
+
+        let closeButton = app.buttons["关闭学习统计"]
+        XCTAssertTrue(closeButton.waitForExistence(timeout: 5))
+        closeButton.tap()
+        XCTAssertTrue(statisticsButton.waitForExistence(timeout: 5))
+    }
+
+    @MainActor
     func testLaunchPerformance() throws {
         // This measures how long it takes to launch your application.
         measure(metrics: [XCTApplicationLaunchMetric()]) {

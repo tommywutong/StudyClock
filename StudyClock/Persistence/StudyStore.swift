@@ -138,6 +138,10 @@ final class StudyStore {
         try append(kind, taskID: taskID, at: date, device: "local")
     }
 
+    func resetToday(taskID: UUID, at date: Date = .now) throws {
+        try append(.reset, taskID: taskID, at: date, device: "local")
+    }
+
     func snapshot(now _: Date = .now, calendar _: Calendar = .current) throws -> TimerSnapshot {
         TimerReducer.reduce(try actionRecords().compactMap(\.actionValue))
     }
