@@ -6,45 +6,37 @@ struct StudyStatisticsView: View {
     let viewModel: TimerViewModel
 
     @State private var selectedPeriod = StudyStatisticsPeriod.sevenDays
+    @State private var selectedSection = StudyStatisticsSection.statistics
     @State private var report: StudyStatisticsReport? = nil
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 16) {
-                    Text("近 \(selectedPeriod.dayCount) 天")
-                        .font(.title2.weight(.semibold))
-                        .accessibilityAddTraits(.isHeader)
-
-                    periodSelector
-
-                    if let report {
-                        if report.hasHistory {
-                            StudyStatisticsOverview(report: report)
-
-                            ForEach(report.tasks) { task in
-                                StudyStatisticsTaskCard(task: task)
-                            }
-                        } else {
-                            ContentUnavailableView(
-                                "还没有学习记录",
-                                systemImage: "chart.bar",
-                                description: Text("完成一次学习计时后，这里会汇总历史投入。"))
-                                .frame(maxWidth: .infinity, minHeight: 180)
-                        }
-                    } else {
-                        ProgressView()
-                            .frame(maxWidth: .infinity, minHeight: 180)
-                    }
-
-                    Text("目标估算：历史周期按任务当前每日目标回算，不代表当时设定的目标。")
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
+            VStack(spacing: 0) {
+                Picker("统计视图", selection: $selectedSection) {
+                    Text("统计")
+                        .tag(StudyStatisticsSection.statistics)
+                        .accessibilityIdentifier("statistics-section-statistics")
+                    Text("学习日历")
+                        .tag(StudyStatisticsSection.calendar)
+                        .accessibilityIdentifier("statistics-section-calendar")
                 }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+                .accessibilityIdentifier("statistics-section-picker")
                 .padding()
-                .frame(maxWidth: 720)
-                .frame(maxWidth: .infinity)
+
+                if selectedSection == .statistics {
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 16) {
+                            statisticsContent
+                        }
+                        .padding()
+                        .frame(maxWidth: 720)
+                        .frame(maxWidth: .infinity)
+                    }
+                } else {
+                    StudyCalendarView(viewModel: viewModel)
+                }
             }
             .navigationTitle("学习统计")
             .toolbar {
@@ -63,6 +55,39 @@ struct StudyStatisticsView: View {
         .onChange(of: viewModel.snapshot) { _, _ in refreshReport() }
         .onChange(of: viewModel.calendar) { _, _ in refreshReport() }
         .onChange(of: viewModel.studyStatisticsTasks) { _, _ in refreshReport() }
+    }
+
+    @ViewBuilder
+    private var statisticsContent: some View {
+        Text("近 \(selectedPeriod.dayCount) 天")
+            .font(.title2.weight(.semibold))
+            .accessibilityAddTraits(.isHeader)
+
+        periodSelector
+
+        if let report {
+            if report.hasHistory {
+                StudyStatisticsOverview(report: report)
+
+                ForEach(report.tasks) { task in
+                    StudyStatisticsTaskCard(task: task)
+                }
+            } else {
+                ContentUnavailableView(
+                    "还没有学习记录",
+                    systemImage: "chart.bar",
+                    description: Text("完成一次学习计时后，这里会汇总历史投入。"))
+                    .frame(maxWidth: .infinity, minHeight: 180)
+            }
+        } else {
+            ProgressView()
+                .frame(maxWidth: .infinity, minHeight: 180)
+        }
+
+        Text("目标估算：历史周期按任务当前每日目标回算，不代表当时设定的目标。")
+            .font(.footnote)
+            .foregroundStyle(.secondary)
+            .fixedSize(horizontal: false, vertical: true)
     }
 
     private var periodSelector: some View {
@@ -138,9 +163,15 @@ private struct StudyStatisticsTaskCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text(task.name)
-                .font(.headline)
-
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                Text(task.name)
+                    .font(.headline)
+                if task.isArchived {
+                    Text("已归档")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
             metricRow("周期投入", StudyStatisticsFormatting.duration(task.elapsed))
             metricRow(
                 "占全部投入",
@@ -198,8 +229,7 @@ private struct StudyStatisticsTaskCard: View {
 
 private enum StudyStatisticsFormatting {
     nonisolated static func duration(_ seconds: TimeInterval) -> String {
-        let value = max(0, Int(seconds))
-        return String(format: "%d:%02d", value / 3_600, (value / 60) % 60)
+        StudyDurationFormatting.hoursMinutes(seconds)
     }
 
     nonisolated static func percentage(_ ratio: Double) -> String {

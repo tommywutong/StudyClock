@@ -86,6 +86,367 @@ struct StudyClockTests {
         #expect(snapshot.elapsed(taskID: tasks[1].id, on: today, calendar: calendar, now: pauseB) == 1_200)
         #expect(snapshot.activeTaskID == nil)
     }
+
+    @MainActor
+    @Test func taskLifecycleCreatesEditsReordersArchivesAndRestores() throws {
+        let store = try StudyStore.makeInMemory()
+        try store.seedDefaultsIfNeeded()
+
+        let originalIDs = try store.tasks().map(\.id)
+        let newID = try store.createTask(name: "英语", dailyGoalSeconds: 1_800)
+        try store.updateTask(id: newID, name: "英语听力", dailyGoalSeconds: 2_400)
+        try store.reorderTasks([newID] + originalIDs)
+
+        try store.archiveTask(id: newID)
+
+        #expect(try store.tasks().map(\.id).first == originalIDs.first)
+        #expect(try store.tasks(includeArchived: true).first(where: { $0.id == newID })?.name == "英语听力")
+        #expect(try store.tasks(includeArchived: true).first(where: { $0.id == newID })?.isArchived == true)
+
+        try store.restoreTask(id: newID)
+        #expect(try store.tasks().map(\.id).last == newID)
+    }
+
+    @MainActor
+    @Test func taskMutationsTrimNamesNormalizeGoalsAndRejectInvalidOrdering() throws {
+        let store = try StudyStore.makeInMemory()
+        try store.seedDefaultsIfNeeded()
+
+        let taskID = try store.createTask(name: "  英语  ", dailyGoalSeconds: -1)
+        let task = try #require(store.tasks().first(where: { $0.id == taskID }))
+        #expect(task.name == "英语")
+        #expect(task.dailyGoalSeconds == 0)
+
+        do {
+            _ = try store.createTask(name: "   ", dailyGoalSeconds: 60)
+            Issue.record("Expected an empty task name to be rejected")
+        } catch let error as StudyStoreError {
+            #expect(error == .invalidTaskName)
+        }
+
+        let activeIDs = try store.tasks().map(\.id)
+        do {
+            try store.reorderTasks([activeIDs[0], activeIDs[0]] + activeIDs.dropFirst())
+            Issue.record("Expected duplicate task IDs to be rejected")
+        } catch let error as StudyStoreError {
+            #expect(error == .invalidTaskOrdering)
+        }
+    }
+
+    @MainActor
+    @Test func archivingRunningTaskIsRejectedAndArchivedTaskCannotReceiveTimerActions() throws {
+        let store = try StudyStore.makeInMemory()
+        try store.seedDefaultsIfNeeded()
+        let task = try #require(store.tasks().first)
+        let start = Date(timeIntervalSince1970: 1_000)
+
+        func expectStoreError(_ expected: StudyStoreError, operation: () throws -> Void) {
+            do {
+                try operation()
+                Issue.record("Expected \(expected), but the operation succeeded")
+            } catch let error as StudyStoreError {
+                #expect(error == expected)
+            } catch {
+                Issue.record("Expected \(expected), got \(error)")
+            }
+        }
+
+        try store.start(taskID: task.id, at: start)
+        expectStoreError(.activeTaskMustBePaused) {
+            try store.archiveTask(id: task.id)
+        }
+
+        try store.pause(taskID: task.id, at: start.addingTimeInterval(60))
+        try store.archiveTask(id: task.id)
+        expectStoreError(.archivedTaskUnavailable) {
+            try store.start(taskID: task.id, at: start.addingTimeInterval(120))
+        }
+        expectStoreError(.archivedTaskUnavailable) {
+            try store.resetToday(taskID: task.id, at: start.addingTimeInterval(120))
+        }
+    }
+
+    @MainActor
+    @Test func archivedTaskHistoryRemainsInDailyTotalAndWidgetExcludesIt() throws {
+        let store = try StudyStore.makeInMemory()
+        try store.seedDefaultsIfNeeded()
+        let task = try #require(store.tasks().first)
+        let start = Date(timeIntervalSince1970: 32_400)
+        let pause = start.addingTimeInterval(600)
+
+        try store.start(taskID: task.id, at: start)
+        try store.pause(taskID: task.id, at: pause)
+        try store.archiveTask(id: task.id)
+
+        #expect(try store.totalElapsed(on: start, now: pause, calendar: utcCalendar) == 600)
+        #expect(try store.widgetState(now: pause, calendar: utcCalendar).tasks.contains(where: { $0.id == task.id }) == false)
+    }
+
+    @Test func calendarUsesTwelveCalendarMonthsIncludesTodayAndClassifiesIntensity() {
+        let taskID = UUID()
+        let now = makeDate(2025, 10, 5, hour: 12, calendar: utcCalendar)
+        let snapshot = TimerReducer.reduce([
+            .start(taskID, at: makeDate(2025, 10, 5, hour: 9, calendar: utcCalendar), device: "mac"),
+            .pause(taskID, at: makeDate(2025, 10, 5, hour: 9, minute: 30, calendar: utcCalendar), device: "mac"),
+            .start(taskID, at: makeDate(2024, 10, 5, hour: 9, calendar: utcCalendar), device: "mac"),
+            .pause(taskID, at: makeDate(2024, 10, 5, hour: 9, minute: 30, calendar: utcCalendar), device: "mac")
+        ])
+
+        let report = StudyCalendarCalculator.calculate(
+            tasks: [.init(id: taskID, name: "八股", isArchived: false, sortOrder: 0)],
+            snapshot: snapshot,
+            now: now,
+            calendar: utcCalendar)
+
+        #expect(report.startDate == makeDate(2024, 10, 5, calendar: utcCalendar))
+        #expect(report.endDate == makeDate(2025, 10, 5, calendar: utcCalendar))
+        #expect(report.days.first?.date == report.startDate)
+        #expect(report.days.last?.date == report.endDate)
+        #expect(report.days.last?.intensity == .medium)
+        #expect(report.days.count == 366)
+        #expect(report.days.contains(where: { $0.intensity == .empty }))
+    }
+
+    @Test func calendarStreakStartsYesterdayWhenTodayIsEmptyAndCanReachBeforeWindow() {
+        let taskID = UUID()
+        let now = makeDate(2025, 10, 5, hour: 12, calendar: utcCalendar)
+        var actions: [TimerActionValue] = []
+        for day in 0..<370 {
+            let date = utcCalendar.date(byAdding: .day, value: -day - 1, to: utcCalendar.startOfDay(for: now))!
+            actions += [
+                .start(taskID, at: date.addingTimeInterval(3_600), device: "mac"),
+                .pause(taskID, at: date.addingTimeInterval(3_660), device: "mac")
+            ]
+        }
+
+        let report = StudyCalendarCalculator.calculate(
+            tasks: [.init(id: taskID, name: "算法", isArchived: false, sortOrder: 0)],
+            snapshot: TimerReducer.reduce(actions),
+            now: now,
+            calendar: utcCalendar)
+
+        #expect(report.currentStreak == 370)
+        #expect(report.longestVisibleStreak == 365)
+    }
+
+    @Test func calendarClassifiesExactIntensityBoundaries() {
+        let taskID = UUID()
+        let dates = [
+            makeDate(2025, 1, 1, calendar: utcCalendar),
+            makeDate(2025, 1, 2, calendar: utcCalendar),
+            makeDate(2025, 1, 3, calendar: utcCalendar),
+            makeDate(2025, 1, 4, calendar: utcCalendar)
+        ]
+        let durations: [TimeInterval] = [1_799, 1_800, 3_600, 7_200]
+        var actions: [TimerActionValue] = []
+        for (date, duration) in zip(dates, durations) {
+            actions += [
+                .start(taskID, at: date.addingTimeInterval(28_800), device: "mac"),
+                .pause(taskID, at: date.addingTimeInterval(28_800 + duration), device: "mac")
+            ]
+        }
+
+        let report = StudyCalendarCalculator.calculate(
+            tasks: [.init(id: taskID, name: "算法", isArchived: false, sortOrder: 0)],
+            snapshot: TimerReducer.reduce(actions),
+            now: makeDate(2025, 1, 4, hour: 12, calendar: utcCalendar),
+            calendar: utcCalendar)
+
+        let intensities = dates.map { date in
+            report.days.first(where: { utcCalendar.isDate($0.date, inSameDayAs: date) })?.intensity
+        }
+        #expect(intensities == [.light, .medium, .strong, .veryStrong])
+    }
+
+    @Test func calendarSplitsMidnightAndKeepsArchivedTaskDetails() {
+        let regularTaskID = UUID()
+        let archivedTaskID = UUID()
+        let firstStart = makeDate(2025, 1, 1, hour: 23, minute: 59, calendar: utcCalendar)
+        let firstPause = makeDate(2025, 1, 2, hour: 0, minute: 1, calendar: utcCalendar)
+        let archivedStart = makeDate(2025, 1, 2, hour: 10, calendar: utcCalendar)
+        let archivedPause = archivedStart.addingTimeInterval(60)
+        let report = StudyCalendarCalculator.calculate(
+            tasks: [
+                .init(id: regularTaskID, name: "八股", isArchived: false, sortOrder: 0),
+                .init(id: archivedTaskID, name: "旧项目", isArchived: true, sortOrder: 1)
+            ],
+            snapshot: TimerReducer.reduce([
+                .start(regularTaskID, at: firstStart, device: "mac"),
+                .pause(regularTaskID, at: firstPause, device: "mac"),
+                .start(archivedTaskID, at: archivedStart, device: "mac"),
+                .pause(archivedTaskID, at: archivedPause, device: "mac")
+            ]),
+            now: makeDate(2025, 1, 2, hour: 12, calendar: utcCalendar),
+            calendar: utcCalendar)
+
+        let firstDay = report.days.first { utcCalendar.isDate($0.date, inSameDayAs: firstStart) }
+        let secondDay = report.days.first { utcCalendar.isDate($0.date, inSameDayAs: firstPause) }
+        #expect(firstDay?.totalElapsed == 60)
+        #expect(secondDay?.totalElapsed == 120)
+        #expect(secondDay?.tasks.map(\.id) == [regularTaskID, archivedTaskID])
+        #expect(secondDay?.tasks.last?.isArchived == true)
+        #expect(secondDay?.tasks.last?.elapsed == 60)
+    }
+
+    @Test func calendarUsesCalendarDayBoundariesAcrossDaylightSavingTime() {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(identifier: "America/Los_Angeles")!
+        let taskID = UUID()
+        let snapshot = TimerReducer.reduce([
+            .start(taskID, at: makeDate(2024, 3, 10, calendar: calendar), device: "mac"),
+            .pause(taskID, at: makeDate(2024, 3, 11, calendar: calendar), device: "mac")
+        ])
+
+        let report = StudyCalendarCalculator.calculate(
+            tasks: [.init(id: taskID, name: "DST", isArchived: false, sortOrder: 0)],
+            snapshot: snapshot,
+            now: makeDate(2024, 3, 12, hour: 12, calendar: calendar),
+            calendar: calendar)
+
+        let daylightSavingDay = report.days.first { calendar.isDate($0.date, inSameDayAs: makeDate(2024, 3, 10, calendar: calendar)) }
+        #expect(abs((daylightSavingDay?.totalElapsed ?? 0) - (23 * 60 * 60)) < 0.001)
+    }
+
+    @Test func calendarMonthLayoutAlignsFirstVisibleDayToConfiguredWeekday() throws {
+        var mondayCalendar = utcCalendar
+        mondayCalendar.firstWeekday = 2
+        let report = StudyCalendarCalculator.calculate(
+            tasks: [],
+            snapshot: TimerReducer.reduce([]),
+            now: makeDate(2026, 10, 5, hour: 12, calendar: mondayCalendar),
+            calendar: mondayCalendar)
+        let months = report.monthSections(calendar: mondayCalendar)
+        let firstMonth = try #require(months.first)
+        let november = try #require(months.first {
+            mondayCalendar.component(.month, from: $0.startDate) == 11
+        })
+        #expect(firstMonth.days.first?.date == makeDate(2025, 10, 5, calendar: mondayCalendar))
+        #expect(firstMonth.leadingEmptyCount == 6)
+        #expect(november.leadingEmptyCount == 5)
+        #expect(months.flatMap(\.days).map(\.date) == report.days.map(\.date))
+
+        var sundayCalendar = mondayCalendar
+        sundayCalendar.firstWeekday = 1
+        #expect(report.monthSections(calendar: sundayCalendar).first?.leadingEmptyCount == 0)
+    }
+
+    @Test func taskGoalInputHandlesValidMinutesAndRejectsInvalidOrOverflowingInput() {
+        #expect(TaskEditorView.goalSeconds(hours: "1", minutes: "90") == 9_000)
+        #expect(TaskEditorView.goalSeconds(hours: "0", minutes: "0") == 0)
+        #expect(TaskEditorView.goalSeconds(hours: "-1", minutes: "0") == nil)
+        #expect(TaskEditorView.goalSeconds(hours: "0", minutes: "-1") == nil)
+        #expect(TaskEditorView.goalSeconds(hours: "", minutes: "0") == nil)
+        #expect(TaskEditorView.goalSeconds(hours: "1.5", minutes: "0") == nil)
+        #expect(TaskEditorView.goalSeconds(hours: String(Int.max), minutes: "0") == nil)
+        #expect(TaskEditorView.goalSeconds(hours: "0", minutes: String(Int.max)) == nil)
+        #expect(TaskEditorView.goalSeconds(hours: "1", minutes: String(Int.max / 60)) == nil)
+    }
+
+    @Test func durationFormattingHandlesFloatingPointGoalBoundaryAndPeriodTotals() throws {
+        let goal = try #require(TaskEditorView.goalSeconds(hours: "0", minutes: "153722867280912930"))
+        #expect(StudyDurationFormatting.hoursMinutes(TimeInterval(goal)) == "2562047788015215:30")
+        #expect(StudyDurationFormatting.hoursMinutes(100_000_000_000_000_000_000) == "27777777777777776:46")
+        #expect(StudyDurationFormatting.hoursMinutes(3_660) == "1:01")
+        #expect(StudyDurationFormatting.hoursMinutes(-1) == "0:00")
+        #expect(StudyDurationFormatting.hoursMinutes(.infinity) == "—")
+        #expect(StudyDurationFormatting.hoursMinutes(.nan) == "—")
+    }
+
+    @Test func calendarClockRefreshAdvancesTodayAndRebuildsAcrossMidnight() throws {
+        let taskID = UUID()
+        let startedAt = makeDate(2025, 1, 2, hour: 9, calendar: utcCalendar)
+        let snapshot = TimerSnapshot(
+            intervals: [TimerInterval(
+                taskID: taskID,
+                start: makeDate(2025, 1, 1, hour: 9, calendar: utcCalendar),
+                end: makeDate(2025, 1, 1, hour: 9, minute: 1, calendar: utcCalendar))],
+            activeTaskID: taskID, activeStartedAt: startedAt, conflictingActionIDs: [])
+        let original = StudyCalendarCalculator.calculate(
+            tasks: [.init(id: taskID, name: "学习", isArchived: false, sortOrder: 0)],
+            snapshot: snapshot, now: startedAt.addingTimeInterval(600), calendar: utcCalendar)
+        let updated = StudyCalendarCalculator.advancingToday(
+            in: original, snapshot: snapshot, now: startedAt.addingTimeInterval(1_800), calendar: utcCalendar)
+        #expect(original.days.last?.totalElapsed == 600)
+        #expect(updated.days.last?.totalElapsed == 1_800)
+        #expect(updated.days.last?.intensity == .medium)
+        #expect(updated.currentStreak == 2)
+        #expect(updated.longestVisibleStreak == 2)
+        #expect(updated.days.dropLast() == original.days.dropLast())
+
+        let nextDay = StudyCalendarCalculator.advancingToday(
+            in: updated, snapshot: snapshot,
+            now: makeDate(2025, 1, 3, minute: 1, calendar: utcCalendar), calendar: utcCalendar)
+        #expect(nextDay.endDate == makeDate(2025, 1, 3, calendar: utcCalendar))
+        #expect(nextDay.startDate == makeDate(2024, 1, 3, calendar: utcCalendar))
+        #expect(nextDay.days.last?.totalElapsed == 60)
+        #expect(nextDay.days.first { $0.date == updated.endDate }?.totalElapsed == 54_000)
+        #expect(nextDay.currentStreak == 3)
+    }
+
+    @MainActor
+    @Test func viewModelTaskMutationsRefreshActiveAndHistoricalLists() throws {
+        let reloader = RecordingWidgetReloader()
+        let model = TimerViewModel(store: try StudyStore.makeInMemory(), reloader: reloader)
+        let originalCount = model.tasks.count
+
+        model.addTask(name: "英语", dailyGoalSeconds: 1_800)
+        let newTask = try #require(model.tasks.last)
+        model.updateTask(id: newTask.id, name: "英语听力", dailyGoalSeconds: 2_400)
+        model.archiveTask(id: newTask.id)
+
+        #expect(model.tasks.count == originalCount)
+        #expect(model.historicalTasks.contains(where: { $0.id == newTask.id && $0.isArchived }))
+        #expect(model.archivedTasks.map(\.id) == [newTask.id])
+        #expect(reloader.reloadCount == 3)
+
+        model.restoreTask(id: newTask.id)
+        #expect(model.tasks.contains(where: { $0.id == newTask.id }))
+        #expect(model.studyStatisticsTasks.contains {
+            $0.id == newTask.id && $0.name == "英语听力" && $0.dailyGoalSeconds == 2_400
+        })
+    }
+
+    @MainActor
+    @Test func viewModelHistoricalStatisticsAndCalendarKeepArchivedTaskData() throws {
+        let store = try StudyStore.makeInMemory()
+        try store.seedDefaultsIfNeeded()
+        let task = try #require(store.tasks().first)
+        let startedAt = makeDate(2025, 1, 2, hour: 9, calendar: utcCalendar)
+        let pausedAt = startedAt.addingTimeInterval(600)
+        try store.start(taskID: task.id, at: startedAt)
+        try store.pause(taskID: task.id, at: pausedAt)
+        try store.archiveTask(id: task.id)
+
+        let referenceDate = makeDate(2025, 1, 3, hour: 12, calendar: utcCalendar)
+        let model = TimerViewModel(store: store)
+        #expect(model.reload(now: referenceDate))
+
+        let statistics = model.studyStatistics(
+            for: .sevenDays,
+            now: referenceDate,
+            calendar: utcCalendar)
+        #expect(statistics.tasks.contains { $0.id == task.id && $0.elapsed == 600 })
+        #expect(statistics.tasks.first(where: { $0.id == task.id })?.isArchived == true)
+
+        let calendarReport = model.studyCalendar(now: referenceDate, calendar: utcCalendar)
+        let day = try #require(calendarReport.days.first { utcCalendar.isDate($0.date, inSameDayAs: startedAt) })
+        #expect(day.tasks.first(where: { $0.id == task.id })?.isArchived == true)
+        #expect(day.tasks.first(where: { $0.id == task.id })?.elapsed == 600)
+    }
+
+    @MainActor
+    @Test func viewModelMovesActiveTasksAndPersistsSortOrder() throws {
+        let reloader = RecordingWidgetReloader()
+        let model = TimerViewModel(store: try StudyStore.makeInMemory(), reloader: reloader)
+        let originalIDs = model.tasks.map(\.id)
+
+        model.moveTasks(from: IndexSet(integer: 0), to: model.tasks.count)
+
+        #expect(model.tasks.map(\.id) == Array(originalIDs.dropFirst()) + [originalIDs[0]])
+        #expect(model.tasks.map(\.sortOrder) == Array(0..<originalIDs.count))
+        #expect(reloader.reloadCount == 1)
+    }
+
     @MainActor
     @Test func resettingActiveTaskClearsTodayStopsItAndPreservesPreviousDay() throws {
         let store = try StudyStore.makeInMemory()
@@ -394,6 +755,47 @@ struct StudyClockTests {
             statusMessage: nil)
 
         #expect(entry.displayTasks.map(\.id) == [current.id, first.id, third.id])
+    }
+
+    @Test func mediumWidgetShowsCurrentTaskFirstAndReportsHiddenTasks() {
+        let tasks = (0..<6).map { index in
+            StudyTimerWidgetTask(id: UUID(), name: "任务\(index)", elapsed: 60, target: 3_600)
+        }
+        let current = tasks[4]
+        let entry = StudyTimerWidgetEntryState(
+            date: .now,
+            tasks: tasks,
+            displayedTaskID: current.id,
+            isRunning: true,
+            elapsedReferenceDate: .now,
+            totalElapsed: 360,
+            statusMessage: nil)
+
+        #expect(entry.mediumDisplayTasks.map(\.id) == [current.id, tasks[0].id, tasks[1].id, tasks[2].id])
+        #expect(entry.hiddenMediumTaskCount == 2)
+        #expect(entry.tasks.map(\.id) == tasks.map(\.id))
+        #expect(entry.totalElapsed == 360)
+    }
+
+    @Test func mediumWidgetPreservesOrderWithoutCurrentTaskAndHandlesCapacityBoundaries() {
+        let tasks = (0..<4).map { index in
+            StudyTimerWidgetTask(id: UUID(), name: "任务\(index)", elapsed: 60, target: 3_600)
+        }
+        for count in 0...tasks.count {
+            let subset = Array(tasks.prefix(count))
+            let entry = StudyTimerWidgetEntryState(
+                date: .now,
+                tasks: subset,
+                displayedTaskID: nil,
+                isRunning: false,
+                elapsedReferenceDate: nil,
+                totalElapsed: TimeInterval(count * 60),
+                statusMessage: nil)
+            #expect(entry.mediumDisplayTasks.map(\.id) == subset.map(\.id))
+            #expect(entry.hiddenMediumTaskCount == 0)
+            #expect(entry.usesMediumEmptyState == subset.isEmpty)
+            #expect(entry.usesEmptyState)
+        }
     }
 
     @Test func widgetElapsedLabelsAlwaysUseHoursMinutesAndSeconds() {

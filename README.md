@@ -6,16 +6,20 @@
 
 ## 功能
 
-- 三个相互独立的学习任务，可在任务之间切换计时
+- 任务数量无硬上限；新安装默认创建“八股”“算法”“项目整理”，支持新增、改名、每日目标、排序、归档和恢复
 - 事件流记录开始、暂停、切换和当天重置，避免直接覆盖累计时长
 - 主 App、菜单栏入口和通知中心 Widget 读取同一份本地计时数据
-- 中号 Widget 显示三张任务卡，可直接开始、暂停或继续任务；每张卡右上角可重置该任务当天累计，重置正在计时的任务时会同时暂停
+- 中号 Widget 按任务数动态布局，当前或最近任务优先，最多展示 4 项；超出时显示剩余数量并引导打开 App。支持开始、暂停、继续及当天重置；重置正在计时的任务会同时暂停
 - 小号 Widget 显示当前或最近任务
 - Widget 运行中的时间使用系统动态计时显示，不通过每秒写库或刷新 Timeline 实现
 - Widget 操作后同步刷新已经打开的 App；App 回到前台时也会重新读取共享状态
 - 学习历史按本地日期汇总，支持跨午夜区间计算
 - 主 App 统计页按任务和总体汇总近 7 / 15 / 30 个完整本地日（不含今天），并与紧邻的前一同长度周期比较
-- 历史目标按任务当前每日目标回算并明确标为估算；不保留目标历史。统计在本地 App 内完成，不改变 Widget 的界面和行为
+- 历史目标按任务当前每日目标回算并明确标为估算；不保留目标历史。任务改名保留 ID 和计时事件，历史使用当前名称
+- 归档任务不再参与计时或 Widget 操作，历史、统计和日历明细仍保留；正在计时的任务需先暂停再归档
+- 统计页可切换学习日历：展示最近 12 个日历月的闭区间（含今天），按本地 Calendar 日期边界和实际投入着色，不按目标完成率着色
+- 日历颜色等级为无投入、少于 30 分钟、30–60 分钟、1–2 小时和至少 2 小时；选择日期可查看总计和任务分项
+- 当前连续学习日按每天实际投入大于 0 计算；今天无投入时从昨天起算，可延伸至可见窗口之前。最长连续学习日只统计可见范围
 - 首次从旧默认 SwiftData 容器迁移到 App Group 共享容器时保留历史记录
 
 ## 运行要求
@@ -23,6 +27,7 @@
 - macOS 14.0 或更高版本
 - Xcode 27.0 或与当前工程设置兼容的较新 Xcode
 - Apple Development 签名，用于在本机安装 App Group 和 Widget Extension
+- Xcode Settings > Accounts 需登录对应 Apple Developer team 并取得 Mac App Development provisioning profile；仅钥匙串中的开发证书不足以启用 App Group。
 
 本机已验证环境：macOS 27、Xcode 27.0、Apple Silicon。
 
@@ -75,7 +80,9 @@ xcodebuild test \
   CODE_SIGNING_REQUIRED=NO
 ```
 
-`StudyClockUITests` 依赖 macOS UI 自动化环境，未纳入无签名 CI；Widget 的最终布局仍应在通知中心中人工确认。
+`StudyClockUITests` 依赖 macOS UI 自动化环境，未纳入无签名 CI；新增任务和学习日历场景使用独立内存 SwiftData fixture，不会写入真实 App Group store。Widget 的最终布局仍应在通知中心中人工确认。
+
+在当前 macOS host 上，生产视图可用独立内存 fixture 编译并启动；若 Xcode UI runner 在建立连接前被系统终止，UI 测试结果按环境限制记录，不视为真实控件交互已通过。
 
 ## 数据与同步模型
 
@@ -102,16 +109,20 @@ Widget Intent ──────┘
 3. 已打开的 App 重新读取快照；
 4. App 回到前台时再次刷新，覆盖 App 在后台期间错过通知的情况。
 
+
+持久化任务和计时写入使用 App Group store 旁的跨进程锁，并在保存失败时回滚当前事务，避免 App 与 Widget 同时操作留下归档且运行的不一致状态。
+
+日历过去日期按报告缓存；运行中的当天每分钟重新计算一次，跨本地午夜才重建 12 个月窗口。重新前台、系统日期切换以及任务或快照变化会立即刷新。
 正常刷新策略：状态变化立即触发重载；运行中的数字由系统动态计时更新；每日累计在本地午夜进入下一天；共享 store 暂时不可用时 Widget 每小时重试一次。
 
 ## 项目结构
 
 ```text
 StudyClock/
-├── Domain/                  # 事件值、Reducer、快照、进度和本地统计计算
+├── Domain/                  # 事件值、Reducer、快照、进度、StudyStatistics.swift、StudyCalendar.swift
 ├── Persistence/             # SwiftData、App Group、迁移和共享查询
 ├── Timer/                   # 主 App 的计时状态与 Widget 刷新
-├── Views/                   # 主 App 仪表盘、历史、统计和任务行
+├── Views/                   # 仪表盘、历史、统计、TaskManagementView.swift、TaskEditorView.swift、StudyCalendarView.swift
 ├── Widgets/                 # Widget Intent 和跨 target DTO
 ├── Mac/                     # macOS 菜单栏入口
 ├── StudyClockApp.swift      # App scene 与前台刷新
@@ -134,6 +145,8 @@ StudyClock/
 - [macOS Widget 实现计划](docs/superpowers/plans/2026-09-28-macos-native-study-widget.md)
 - [本地学习统计设计说明](docs/superpowers/specs/2026-10-01-study-statistics-design.md)
 - [本地学习统计实施计划](docs/superpowers/plans/2026-10-01-study-statistics.md)
+- [学习日历与自定义任务设计说明](docs/superpowers/specs/2026-10-05-study-calendar-dynamic-tasks-design.md)
+- [学习日历与自定义任务实施计划](docs/superpowers/plans/2026-10-05-study-calendar-dynamic-tasks.md)
 
 ## 反馈
 

@@ -75,9 +75,9 @@
 				Domain/TimerSnapshot.swift,
 				Persistence/StudyStore.swift,
 				Persistence/StudyTaskRecord.swift,
+				Widgets/ResetStudyTimerIntent.swift,
 				Widgets/StudyTimerWidgetState.swift,
 				Widgets/ToggleStudyTimerIntent.swift,
-				Widgets/ResetStudyTimerIntent.swift,
 			);
 			target = 4C40AE853068CBAB00DE2C68 /* StudyClockWidgetExtension */;
 		};

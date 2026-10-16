@@ -9,16 +9,39 @@ enum StudyStatisticsPeriod: Int, CaseIterable, Identifiable, Sendable, Equatable
     var dayCount: Int { rawValue }
 }
 
+enum StudyStatisticsSection: String, CaseIterable, Identifiable, Sendable, Equatable {
+    case statistics
+    case calendar
+
+    var id: String { rawValue }
+}
+
 struct StudyStatisticsTaskInput: Equatable, Sendable {
     let id: UUID
     let name: String
     let dailyGoalSeconds: Int
     let sortOrder: Int
+    let isArchived: Bool
+
+    init(
+        id: UUID,
+        name: String,
+        dailyGoalSeconds: Int,
+        sortOrder: Int,
+        isArchived: Bool = false
+    ) {
+        self.id = id
+        self.name = name
+        self.dailyGoalSeconds = dailyGoalSeconds
+        self.sortOrder = sortOrder
+        self.isArchived = isArchived
+    }
 }
 
 struct StudyStatisticsTaskSummary: Equatable, Identifiable, Sendable {
     let id: UUID
     let name: String
+    let isArchived: Bool
     let elapsed: TimeInterval
     let previousElapsed: TimeInterval
     let elapsedChange: TimeInterval
@@ -149,6 +172,7 @@ enum StudyStatisticsCalculator {
             return StudyStatisticsTaskSummary(
                 id: totals.task.id,
                 name: totals.task.name,
+                isArchived: totals.task.isArchived,
                 elapsed: totals.elapsed,
                 previousElapsed: totals.previousElapsed,
                 elapsedChange: elapsedChange,

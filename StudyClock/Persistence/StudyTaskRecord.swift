@@ -7,12 +7,20 @@ final class StudyTaskRecord {
     var name: String
     var dailyGoalSeconds: Int
     var sortOrder: Int
+    var isArchived: Bool = false
 
-    init(id: UUID, name: String, dailyGoalSeconds: Int, sortOrder: Int) {
+    init(
+        id: UUID,
+        name: String,
+        dailyGoalSeconds: Int,
+        sortOrder: Int,
+        isArchived: Bool = false
+    ) {
         self.id = id
         self.name = name
         self.dailyGoalSeconds = dailyGoalSeconds
         self.sortOrder = sortOrder
+        self.isArchived = isArchived
     }
 }
 

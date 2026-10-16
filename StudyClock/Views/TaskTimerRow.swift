@@ -42,12 +42,12 @@ struct TaskTimerRow: View {
 
     private var progressText: String {
         let elapsed = format(progress.elapsed)
+        if progress.target <= 0 { return "已学 \(elapsed) · 未设目标" }
         if progress.overtime > 0 { return "已学 \(elapsed) · 超额 \(format(progress.overtime))" }
         return "已学 \(elapsed) · 还差 \(format(progress.remaining))"
     }
 
     private func format(_ seconds: TimeInterval) -> String {
-        let value = max(0, Int(seconds))
-        return String(format: "%d:%02d", value / 3_600, (value / 60) % 60)
+        StudyDurationFormatting.hoursMinutes(seconds)
     }
 }

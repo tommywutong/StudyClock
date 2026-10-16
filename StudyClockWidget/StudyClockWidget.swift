@@ -56,10 +56,14 @@ struct StudyClockWidgetEntryView: View {
         Group {
             if let message = entry.statusMessage {
                 errorView(message)
+            } else if family == .systemMedium {
+                if entry.usesMediumEmptyState {
+                    emptyView
+                } else {
+                    mediumView
+                }
             } else if entry.usesEmptyState {
                 emptyView
-            } else if family == .systemMedium {
-                mediumView
             } else {
                 smallView
             }
@@ -93,15 +97,26 @@ struct StudyClockWidgetEntryView: View {
 
                 totalElapsedView
             }
-            HStack(spacing: 7) {
-                ForEach(Array(entry.displayTasks.prefix(3).enumerated()), id: \.element.id) { index, task in
-                    StudyClockWidgetTimerCard(
-                        task: task,
-                        isPrimary: index == 0,
-                        isRunning: entry.isRunning && task.id == entry.displayedTaskID,
-                        elapsedReferenceDate: task.id == entry.displayedTaskID ? entry.elapsedReferenceDate : nil)
-                    .frame(minWidth: index == 0 ? 108 : 72, maxWidth: index == 0 ? .infinity : 88)
+            LazyVGrid(
+                columns: Array(
+                    repeating: GridItem(.flexible(minimum: 0), spacing: 6),
+                    count: entry.mediumDisplayTasks.count == 1 ? 1 : 2),
+                spacing: 6) {
+                    ForEach(entry.mediumDisplayTasks) { task in
+                        StudyClockWidgetTimerCard(
+                            task: task,
+                            isPrimary: task.id == entry.displayedTaskID,
+                            isRunning: entry.isRunning && task.id == entry.displayedTaskID,
+                            elapsedReferenceDate: task.id == entry.displayedTaskID
+                                ? entry.elapsedReferenceDate : nil)
+                    }
                 }
+            if entry.hiddenMediumTaskCount > 0 {
+                Link(
+                    "还有 \(entry.hiddenMediumTaskCount) 项，打开 App 查看",
+                    destination: Self.dashboardURL)
+                    .font(.caption2)
+                    .lineLimit(1)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
@@ -210,36 +225,33 @@ private struct StudyClockWidgetTimerCard: View {
     let elapsedReferenceDate: Date?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 5) {
-            HStack(alignment: .top, spacing: 4) {
-                Label(task.name, systemImage: isRunning ? "circle.fill" : "circle")
+        VStack(alignment: .leading, spacing: 2) {
+            HStack(spacing: 4) {
+                Text(task.name)
                     .font(.caption2.weight(isPrimary ? .semibold : .regular))
-                    .foregroundStyle(isRunning ? .orange : isPrimary ? .primary : .secondary)
+                    .foregroundStyle(isRunning ? .orange : .primary)
                     .lineLimit(1)
-
                 Spacer(minLength: 0)
-
                 resetButton
             }
-
-            elapsed
-                .font(isPrimary ? .title3.weight(.bold) : .headline.weight(.bold))
-                .monospacedDigit()
-                .minimumScaleFactor(0.7)
-
+            HStack(spacing: 4) {
+                elapsed
+                    .font(.caption.monospacedDigit().weight(.semibold))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                Spacer(minLength: 0)
+                actionButton
+                    .controlSize(.mini)
+            }
             Text(isRunning ? "正在计时" : "已暂停")
-                .font(.caption2)
+                .font(.system(size: 9))
                 .foregroundStyle(isRunning ? .orange : .secondary)
-
-            actionButton
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(8)
+        .padding(.horizontal, 6)
+        .padding(.vertical, 4)
         .background(
-            isRunning
-                ? Color.orange.opacity(isPrimary ? 0.13 : 0.08)
-                : Color.primary.opacity(isPrimary ? 0.08 : 0.045),
-            in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+            isRunning ? Color.orange.opacity(0.13) : Color.primary.opacity(0.045),
+            in: RoundedRectangle(cornerRadius: 8, style: .continuous))
     }
 
     private var resetButton: some View {

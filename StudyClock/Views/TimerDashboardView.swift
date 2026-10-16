@@ -7,6 +7,7 @@ struct TimerDashboardView: View {
     private enum DashboardSheet: String, Identifiable {
         case history
         case statistics
+        case tasks
 
         var id: String { rawValue }
     }
@@ -67,6 +68,13 @@ struct TimerDashboardView: View {
                             }
                             .accessibilityLabel("查看学习统计")
                         }
+                        ToolbarItem(placement: .automatic) {
+                            Button("任务", systemImage: "checklist") {
+                                presentedSheet = .tasks
+                            }
+                            .accessibilityLabel("管理学习任务")
+                            .accessibilityIdentifier("task-management")
+                        }
                     }
                 }
                 .sheet(item: $presentedSheet) { destination in
@@ -77,6 +85,9 @@ struct TimerDashboardView: View {
                     case .statistics:
                         StudyStatisticsView(viewModel: viewModel)
                             .frame(minWidth: 440, minHeight: 520)
+                    case .tasks:
+                        TaskManagementView(viewModel: viewModel)
+                            .frame(minWidth: 520, minHeight: 480)
                     }
                 }
             }

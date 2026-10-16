@@ -53,7 +53,6 @@ struct HistoryView: View {
     }
 
     private func format(_ seconds: TimeInterval) -> String {
-        let value = max(0, Int(seconds))
-        return String(format: "%d:%02d", value / 3_600, (value / 60) % 60)
+        StudyDurationFormatting.hoursMinutes(seconds)
     }
 }

@@ -28,6 +28,16 @@ struct StudyTimerWidgetEntryState: TimelineEntry, Equatable {
 }
 
 extension StudyTimerWidgetEntryState {
+    static let mediumDisplayCapacity = 4
+
+    var mediumDisplayTasks: [StudyTimerWidgetTask] {
+        Array(displayTasks.prefix(Self.mediumDisplayCapacity))
+    }
+
+    var hiddenMediumTaskCount: Int {
+        max(tasks.count - min(tasks.count, Self.mediumDisplayCapacity), 0)
+    }
+
     var displayedTask: StudyTimerWidgetTask? {
         displayedTaskID.flatMap { taskID in
             tasks.first { $0.id == taskID }
@@ -36,6 +46,10 @@ extension StudyTimerWidgetEntryState {
 
     var usesEmptyState: Bool {
         statusMessage == nil && displayedTask == nil
+    }
+
+    var usesMediumEmptyState: Bool {
+        statusMessage == nil && tasks.isEmpty
     }
 
     var displayTasks: [StudyTimerWidgetTask] {

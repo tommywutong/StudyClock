@@ -33,14 +33,20 @@ final class TimerViewModel {
     private let reloader: any StudyClockWidgetReloading
 
     private(set) var tasks: [StudyTaskRecord] = []
+    private(set) var historicalTasks: [StudyTaskRecord] = []
+
+    var archivedTasks: [StudyTaskRecord] {
+        historicalTasks.filter(\.isArchived)
+    }
 
     var studyStatisticsTasks: [StudyStatisticsTaskInput] {
-        tasks.map { task in
+        historicalTasks.map { task in
             StudyStatisticsTaskInput(
                 id: task.id,
                 name: task.name,
                 dailyGoalSeconds: task.dailyGoalSeconds,
-                sortOrder: task.sortOrder)
+                sortOrder: task.sortOrder,
+                isArchived: task.isArchived)
         }
     }
     private(set) var snapshot = TimerSnapshot(
@@ -115,7 +121,7 @@ final class TimerViewModel {
 
     func totalElapsed(now: Date) -> TimeInterval {
         let day = calendar.startOfDay(for: now)
-        return tasks.reduce(0) { total, task in
+        return historicalTasks.reduce(0) { total, task in
             total + snapshot.elapsed(taskID: task.id, on: day, calendar: calendar, now: now)
         }
     }
@@ -124,10 +130,10 @@ final class TimerViewModel {
         guard let store else { return [] }
         do {
             return try store.historyDays(through: now, calendar: calendar).map { day in
-                let total = tasks.reduce(0) { partial, task in
+                let total = historicalTasks.reduce(0) { partial, task in
                     partial + snapshot.elapsed(taskID: task.id, on: day, calendar: calendar, now: now)
                 }
-                let target = tasks.reduce(0) { partial, task in
+                let target = historicalTasks.reduce(0) { partial, task in
                     partial + TimeInterval(task.dailyGoalSeconds)
                 }
                 return StudyDaySummary(date: day, total: total, target: target)
@@ -136,6 +142,20 @@ final class TimerViewModel {
             errorMessage = error.localizedDescription
             return []
         }
+    }
+
+    func studyCalendar(now: Date, calendar: Calendar) -> StudyCalendarReport {
+        StudyCalendarCalculator.calculate(
+            tasks: historicalTasks.map { task in
+                StudyCalendarTaskInput(
+                    id: task.id,
+                    name: task.name,
+                    isArchived: task.isArchived,
+                    sortOrder: task.sortOrder)
+            },
+            snapshot: snapshot,
+            now: now,
+            calendar: calendar)
     }
 
     func studyStatistics(
@@ -149,6 +169,63 @@ final class TimerViewModel {
             period: period,
             now: now,
             calendar: calendar)
+    }
+
+    func addTask(name: String, dailyGoalSeconds: Int) {
+        guard let store else { return }
+        do {
+            _ = try store.createTask(name: name, dailyGoalSeconds: dailyGoalSeconds)
+            if reload() {
+                reloader.reloadTimelines()
+            }
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    func archiveTask(id: UUID) {
+        guard let store else { return }
+        do {
+            try store.archiveTask(id: id)
+            if reload() {
+                reloader.reloadTimelines()
+            }
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    func restoreTask(id: UUID) {
+        guard let store else { return }
+        do {
+            try store.restoreTask(id: id)
+            if reload() {
+                reloader.reloadTimelines()
+            }
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    func moveTasks(from source: IndexSet, to destination: Int) {
+        guard let store, !source.isEmpty else { return }
+        var reorderedTasks = tasks
+        let movedTasks = source.sorted().map { reorderedTasks[$0] }
+        for index in source.sorted(by: >) {
+            reorderedTasks.remove(at: index)
+        }
+        let adjustment = source.filter { $0 < destination }.count
+        let insertionIndex = min(max(destination - adjustment, 0), reorderedTasks.count)
+        reorderedTasks.insert(contentsOf: movedTasks, at: insertionIndex)
+
+        do {
+            try store.reorderTasks(reorderedTasks.map(\.id))
+            if reload() {
+                reloader.reloadTimelines()
+            }
+        } catch {
+            errorMessage = error.localizedDescription
+        }
     }
 
     func updateTask(id: UUID, name: String, dailyGoalSeconds: Int) {
@@ -173,8 +250,12 @@ final class TimerViewModel {
         guard let store else { return false }
         do {
             try store.seedDefaultsIfNeeded()
-            tasks = try store.tasks()
-            snapshot = try store.snapshot(now: now, calendar: calendar)
+            let activeTasks = try store.tasks()
+            let allTasks = try store.tasks(includeArchived: true)
+            let currentSnapshot = try store.snapshot(now: now, calendar: calendar)
+            tasks = activeTasks
+            historicalTasks = allTasks
+            snapshot = currentSnapshot
             errorMessage = nil
             return true
         } catch {
